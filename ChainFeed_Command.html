@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHAINFEED — Torn Chain Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+  :root{
+    --bg:#0a0b0f; --bg-2:#0e1016; --panel:#13151c; --panel-2:#181b24;
+    --border:#22252f; --border-soft:#1a1c25;
+    --text:#eceef2; --text-dim:#8b8fa3; --text-faint:#5a5e6e;
+    --accent:#f0b429; --accent-soft:#f0b4291a; --accent-bright:#ffce5a;
+    --win:#3ecf8e; --loss:#f2665a; --amber:#f0b429; --neutral:#7b8194;
+    --energy:#6c7dfa; --xan:#c77dff; --point:#4fb3d9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #1f180a80 0%, transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, #14122070 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  ::selection{background:var(--accent); color:#000;}
+  .wrap{max-width:1240px; margin:0 auto; padding:24px 20px 60px;}
+  header{display:flex; align-items:center; gap:14px; margin-bottom:22px; flex-wrap:wrap;}
+  .logo{
+    width:38px; height:38px; border-radius:10px; flex:none;
+    background:linear-gradient(140deg, var(--accent), #c78f14);
+    display:grid; place-items:center; font-weight:800; font-size:13px; letter-spacing:.5px; color:#1a1400;
+  }
+  h1{font-size:19px; margin:0; font-weight:700; letter-spacing:-.2px;}
+  .sub{font-size:12px; color:var(--text-faint); margin-top:1px;}
+  .badges{margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .badge{font-size:11px; font-weight:600; padding:5px 10px; border-radius:20px; background:var(--panel); border:1px solid var(--border); color:var(--text-dim);}
+  .badge.mode{color:var(--accent-bright); border-color:#f0b42940; background:var(--accent-soft);}
+  .badge.warn{color:var(--amber); border-color:#f0b42940; background:#f0b42912;}
+  .badge.live{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
+
+  .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:16px;}
+  .panel h2{font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-faint); margin:0 0 14px; font-weight:600;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px;}
+  label.field{display:block;}
+  label.field span{display:block; font-size:11px; color:var(--text-dim); margin-bottom:5px; font-weight:500;}
+  input[type=text], input[type=password], input[type=datetime-local], select{
+    width:100%; padding:9px 11px; border-radius:8px; background:var(--bg-2);
+    border:1px solid var(--border); color:var(--text); font-size:13px; font-family:'JetBrains Mono', monospace;
+  }
+  input:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent;}
+  .btnrow{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap; align-items:center;}
+  button{
+    padding:9px 15px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel-2); color:var(--text); font-size:13px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#221d10;}
+  button.primary{background:var(--accent); border-color:var(--accent); color:#1a1400;}
+  button.primary:hover:not(:disabled){background:var(--accent-bright); border-color:var(--accent-bright);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  button.small{padding:6px 11px; font-size:12px;}
+  .checkline{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-dim); cursor:pointer;}
+  .checkline input{accent-color:var(--accent);}
+  .status{margin-top:12px; font-size:12px; color:var(--text-dim); min-height:16px;}
+  .status.ok{color:var(--win);} .status.err{color:var(--loss);} .status.warn{color:var(--amber);}
+  .hint{font-size:11px; color:var(--text-faint); margin-top:6px; line-height:1.5;}
+
+  nav.tabs{display:flex; gap:4px; margin-bottom:16px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
+  nav.tabs button{background:none; border:none; border-bottom:2px solid transparent; border-radius:0; padding:10px 14px; color:var(--text-faint); font-size:13px;}
+  nav.tabs button:hover:not(:disabled){background:none; color:var(--text-dim);}
+  nav.tabs button.on{color:var(--text); border-bottom-color:var(--accent);}
+  nav.tabs button:disabled{opacity:.3;}
+  .view{display:none;} .view.on{display:block;}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-bottom:16px;}
+  .stat{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:13px 14px;}
+  .stat .v{font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; letter-spacing:-.5px;}
+  .stat .l{font-size:10px; text-transform:uppercase; letter-spacing:.9px; color:var(--text-faint); margin-top:3px; font-weight:600;}
+  .stat.energy .v{color:var(--energy);} .stat.xan .v{color:var(--xan);}
+  .stat.point .v{color:var(--point);} .stat.amber .v{color:var(--amber);} .stat.win .v{color:var(--win);}
+
+  .chainhead{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:4px;}
+  .chainlen{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:var(--accent-bright);}
+  .chainmeta{font-size:12px; color:var(--text-dim); display:flex; gap:16px; flex-wrap:wrap; margin-top:4px;}
+  .chainmeta b{color:var(--text); font-family:'JetBrains Mono',monospace; font-weight:600;}
+  .splitbar{display:flex; height:30px; border-radius:8px; overflow:hidden; border:1px solid var(--border-soft); margin-top:6px;}
+  .splitbar div{display:grid; place-items:center; font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:#0a0b0f; min-width:0; transition:width .5s ease;}
+  .seg-hosp{background:var(--loss);} .seg-mug{background:var(--win);} .seg-leave{background:var(--neutral);}
+  .splitlegend{display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--text-dim); flex-wrap:wrap;}
+  .splitlegend .dot{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle;}
+  .livepill{font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--win); border:1px solid #3ecf8e55; background:#3ecf8e12; border-radius:20px; padding:2px 8px; margin-left:8px; vertical-align:middle;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.9px;
+    color:var(--text-faint); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  thead th.sortable{cursor:pointer; user-select:none;}
+  thead th.sortable:hover{color:var(--text-dim);}
+  thead th.sorted{color:var(--accent-bright);}
+  tbody td{padding:9px 10px; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
+  tbody tr:hover{background:#ffffff05;}
+  tbody tr.total{background:#f0b4290d; font-weight:700;}
+  tbody tr.total td{border-top:1px solid var(--border); border-bottom:none;}
+  td.num, th.num{text-align:right; font-family:'JetBrains Mono',monospace;}
+  .rank{color:var(--text-faint); font-family:'JetBrains Mono',monospace; font-size:12px;}
+  .name{font-weight:600;}
+  .plink{color:var(--text); text-decoration:none; border-bottom:1px dotted var(--text-faint);}
+  .plink:hover{color:var(--accent-bright); border-color:var(--accent-bright);}
+  .cell-e{color:var(--energy);} .cell-xan{color:var(--xan);} .cell-pt{color:var(--point);}
+  .cell-hosp{color:var(--loss);} .cell-mug{color:var(--win);} .cell-leave{color:var(--neutral);}
+  .tblwrap{overflow:auto; max-height:640px;}
+  .tblfoot{display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:10px; flex-wrap:wrap;}
+  .count{font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
+  .empty{padding:34px; text-align:center; color:var(--text-faint); font-size:13px;}
+  .filterrow{display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;}
+  .filterrow input[type=text]{max-width:220px; font-family:inherit;}
+  footer{margin-top:26px; font-size:11px; color:var(--text-faint); text-align:center; line-height:1.6;}
+  .notefoot{font-size:11px; color:var(--text-faint); line-height:1.6; margin-top:12px;}
+  @media (max-width:640px){ .wrap{padding:16px 12px 40px;} .stat .v{font-size:18px;} }
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">CF</div>
+  <div>
+    <h1>Chainfeed</h1>
+    <div class="sub">Torn chain command — consumables vs energy</div>
+  </div>
+  <div class="badges">
+    <span class="badge mode" id="modeBadge">No key</span>
+    <span class="badge" id="chainStatus">Not run yet</span>
+  </div>
+</header>
+
+<section class="panel">
+  <h2>Setup</h2>
+  <div class="grid">
+    <label class="field"><span>API key (faction access)</span><input type="password" id="apiKey" placeholder="your Torn API key" autocomplete="off"></label>
+    <label class="field"><span>Your faction ID</span><input type="text" id="myFaction" placeholder="auto"></label>
+    <label class="field"><span>Recent chains (last 100)</span><select id="chainSelect"><option value="">— load latest or list —</option></select></label>
+    <label class="field"><span>Armoury open / stacking start</span><input type="datetime-local" id="armouryOpen"></label>
+  </div>
+  <div class="hint">Set <b>Armoury open</b> to when Xanax and points became available for stacking — the consumables window then runs from that moment through the end of the chain, so pre-chain stacking is counted. Leave it blank to track only during the chain. Hits, losses and respect always come from the chain report itself.</div>
+  <div class="btnrow">
+    <button class="primary" id="loadLatestBtn">Load latest chain</button>
+    <button id="listChainsBtn">List recent chains</button>
+    <button id="loadSelectedBtn" disabled>Load selected</button>
+    <button id="saveBtn">Save setup</button>
+    <label class="checkline"><input type="checkbox" id="tct" checked> Times in TCT</label>
+    <label class="checkline"><input type="checkbox" id="saveKey"> Remember key on this device</label>
+  </div>
+  <div class="status" id="statusMsg">Enter a faction-access key and press Load latest chain. If a chain is running it loads live; otherwise it loads your most recent finished chain.</div>
+  <div class="hint" id="capHint"></div>
+</section>
+
+<nav class="tabs">
+  <button data-view="overview" class="on">Overview</button>
+  <button data-view="members" id="tabMembers">Members</button>
+</nav>
+
+<section class="view on" id="view-overview">
+  <div class="panel" id="chainPanel" style="display:none;">
+    <h2>Chain report</h2>
+    <div class="chainhead">
+      <div><div class="chainlen" id="chainLen">0<span class="livepill" id="livePill" style="display:none;">LIVE</span></div><div class="sub" id="chainId"></div></div>
+      <div style="text-align:right;"><div class="chainlen" id="chainRespect" style="color:var(--win);">0</div><div class="sub">respect</div></div>
+    </div>
+    <div class="chainmeta">
+      <div>Start <b id="chainStart">—</b></div>
+      <div>End <b id="chainEnd">—</b></div>
+      <div>Duration <b id="chainDur">—</b></div>
+      <div>Contributors <b id="chainContrib">—</b></div>
+      <div id="stackMeta" style="display:none;">Stacking from <b id="stackFrom">—</b></div>
+    </div>
+  </div>
+
+  <div class="panel" id="splitPanel" style="display:none;">
+    <h2>Successful hit distribution — hosp / mug / leave</h2>
+    <div class="splitbar" id="splitBar"></div>
+    <div class="splitlegend">
+      <span><span class="dot" style="background:var(--loss)"></span>Hosp <b id="legHosp" style="color:var(--loss)">0</b></span>
+      <span><span class="dot" style="background:var(--win)"></span>Mug <b id="legMug" style="color:var(--win)">0</b></span>
+      <span><span class="dot" style="background:var(--neutral)"></span>Leave <b id="legLeave" style="color:var(--neutral)">0</b></span>
+      <span style="color:var(--text-faint)">Finishers logged <b id="legTotal">0</b> of <b id="legHits">0</b> hits</span>
+    </div>
+  </div>
+
+  <div class="stats" id="statsGrid" style="display:none;">
+    <div class="stat win"><div class="v" id="sHits">0</div><div class="l">Total hits</div></div>
+    <div class="stat xan"><div class="v" id="sXan">0</div><div class="l">Xanax used</div></div>
+    <div class="stat point"><div class="v" id="sPts">0</div><div class="l">Points used</div></div>
+    <div class="stat energy"><div class="v" id="sEin">0</div><div class="l">Energy in (consumables)</div></div>
+    <div class="stat amber"><div class="v" id="sEspent">0</div><div class="l">Energy spent (hits)</div></div>
+  </div>
+
+  <div class="empty" id="emptyOverview">Nothing loaded yet. Press Load latest chain.</div>
+</section>
+
+<section class="view" id="view-members">
+  <div class="panel">
+    <h2>Per-member: consumables vs energy</h2>
+    <div class="filterrow">
+      <input type="text" id="memberFilter" placeholder="Filter members">
+      <label class="checkline"><input type="checkbox" id="hideZero"> Hide members with no hits</label>
+    </div>
+    <div class="tblwrap">
+      <table id="memberTable">
+        <thead><tr>
+          <th class="num">#</th>
+          <th class="sortable" data-key="name">Member</th>
+          <th class="num sortable sorted" data-key="hits">Hits</th>
+          <th class="num sortable" data-key="assists">Assist</th>
+          <th class="num sortable" data-key="losses">Loss</th>
+          <th class="num sortable" data-key="hosp">Hosp</th>
+          <th class="num sortable" data-key="mug">Mug</th>
+          <th class="num sortable" data-key="leave">Leave</th>
+          <th class="num sortable" data-key="respect">Respect</th>
+          <th class="num sortable" data-key="xan">Xanax</th>
+          <th class="num sortable" data-key="points">Points</th>
+          <th class="num sortable" data-key="eIn">E In</th>
+          <th class="num sortable" data-key="eSpent">E Spent</th>
+        </tr></thead>
+        <tbody id="memberBody"></tbody>
+      </table>
+    </div>
+    <div class="tblfoot">
+      <span class="count" id="memberCount"></span>
+      <span>
+        <button class="small" id="exportCsv">Export CSV</button>
+        <button class="small" id="exportXlsx">Export Excel</button>
+      </span>
+    </div>
+    <div class="notefoot">
+      E In is the consumable energy poured in — Xanax plus point refills. E Spent is (Hits + Assists + Losses) × energy per hit, since a loss or assist still burns energy even though it doesn't extend the chain. Xanax and points are read from faction armoury news across the chain window, so only direct faction-armoury use is counted — personal-stash Xanax won't show. The Xan E and Refill E split is in the CSV/Excel export.
+    </div>
+  </div>
+  <div class="empty" id="emptyMembers">No chain loaded. This view needs a faction-access key.</div>
+</section>
+
+<footer>
+  Requests go straight from this page to api.torn.com with the key you type in. Nothing is sent anywhere else, and nothing is stored off this device.
+</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const S = {
+  chain: null,
+  live: null,
+  members: [],
+  armoury: {},
+  roster: {},
+  profileNames: {},
+  donators: {},
+  caps: {faction:false, level:null, name:null},
+  sortKey: 'hits',
+  sortDir: -1
+};
+
+const now = () => Math.floor(Date.now()/1000);
+
+function setStatus(msg, cls){
+  const el = $('statusMsg');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function useTct(){ return $('tct').checked; }
+
+function tsFromInput(value){
+  if(!value) return null;
+  const v = value.length === 16 ? value + ':00' : value;
+  const ms = useTct() ? Date.parse(v + 'Z') : Date.parse(v);
+  return isNaN(ms) ? null : Math.floor(ms/1000);
+}
+
+function fmtTime(ts){
+  if(!ts) return '—';
+  const d = new Date(ts*1000);
+  return useTct()
+    ? d.toLocaleString('en-GB', {timeZone:'UTC', hour12:false}).replace(',','') + ' TCT'
+    : d.toLocaleString();
+}
+
+function dur(secs){
+  if(secs == null) return '—';
+  const s = Math.max(0, Math.floor(secs));
+  if(s < 60) return s + 's';
+  if(s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+  if(s < 86400) return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  return Math.floor(s/86400) + 'd ' + Math.floor((s%86400)/3600) + 'h';
+}
+
+function esc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function nfmt(n){ return (n || 0).toLocaleString('en-US'); }
+
+const Q = {last:0, gap:700, gate:Promise.resolve()};
+
+function apiCall(path, selections, params){
+  const run = Q.gate.then(async () => {
+    const wait = Q.gap - (Date.now() - Q.last);
+    if(wait > 0) await new Promise(r => setTimeout(r, wait));
+    return rawCall(path, selections, params);
+  });
+  Q.gate = run.then(() => {}, () => {});
+  return run;
+}
+
+async function rawCall(path, selections, params, attempt = 0){
+  const key = $('apiKey').value.trim();
+  if(!key) throw new Error('Enter your API key first.');
+  const usp = new URLSearchParams({key, selections, comment:'Chainfeed', ...(params || {})});
+  Q.last = Date.now();
+  let data;
+  try{
+    const res = await fetch(`https://api.torn.com/${path}/?${usp.toString()}`);
+    data = await res.json();
+  }catch(e){
+    if(attempt < 2){ await new Promise(r => setTimeout(r, 1500*(attempt+1))); return rawCall(path, selections, params, attempt+1); }
+    throw new Error('Network error reaching api.torn.com — check your connection.');
+  }
+  if(data.error){
+    const c = data.error.code;
+    if(c === 5 && attempt < 3){ await new Promise(r => setTimeout(r, 4000*(attempt+1))); return rawCall(path, selections, params, attempt+1); }
+    const e = new Error(explainError(c, data.error.error));
+    e.code = c;
+    throw e;
+  }
+  return data;
+}
+
+function explainError(code, msg){
+  const map = {
+    2: 'That key was rejected. Check for a typo or a stray space.',
+    5: 'Torn is rate-limiting this key. Wait a minute and try again.',
+    6: 'Torn does not recognise that ID.',
+    7: 'Private faction data was refused. Either the key lacks Faction API Access, or the ID is not a faction the key owns.',
+    9: 'Torn API is in maintenance mode. Try again shortly.',
+    16: 'This key does not have a high enough access level. Chain reports need faction API access.',
+    18: 'That key has been paused by its owner.'
+  };
+  return map[code] || `Torn API error ${code}: ${msg}`;
+}
+
+async function detectMyFaction(){
+  const d = await apiCall('user', 'profile');
+  if(d.faction && d.faction.faction_id){
+    $('myFaction').value = d.faction.faction_id;
+    return String(d.faction.faction_id);
+  }
+  throw new Error('That account is not in a faction — enter a faction ID manually.');
+}
+
+async function detectCaps(){
+  const caps = {faction:false, level:null, name:null};
+  try{ const info = await apiCall('key', 'info'); caps.level = info.access_level; caps.name = info.access_type; }catch(e){}
+  const b = $('modeBadge');
+  try{
+    await apiCall('faction', 'armorynews', {from: now()-60, to: now()});
+    caps.faction = true;
+    b.textContent = 'Faction key';
+    b.className = 'badge mode';
+  }catch(e){
+    caps.faction = false;
+    caps.factionErr = e;
+    b.textContent = 'No faction access';
+    b.className = 'badge warn';
+  }
+  S.caps = caps;
+  $('capHint').textContent = caps.faction
+    ? 'Faction access confirmed — chain reports and armoury news are readable.'
+    : 'This key cannot read private faction data. A co-leader key needs both an access level that includes faction selections and the "API Access" permission on the position. ' + (caps.factionErr ? 'Torn said: ' + caps.factionErr.message : '');
+  return caps;
+}
+
+async function fetchArmouryUsage(fromTs, toTs, onProgress){
+  const usage = {};
+  const upper = toTs || now();
+  let from = fromTs;
+  const seen = new Set();
+  for(let page = 0; page < 200; page++){
+    let data;
+    try{ data = await apiCall('faction', 'armorynews', {from, to: upper, sort:'asc'}); }
+    catch(e){ if(page === 0) throw e; break; }
+    const news = data.armorynews || {};
+    const entries = Object.entries(news).map(([id, n]) => ({id, ...n}));
+    if(!entries.length) break;
+    entries.sort((a, b) => a.timestamp - b.timestamp);
+    let fresh = 0, newest = from;
+    for(const e of entries){
+      if(e.timestamp > upper) continue;
+      newest = Math.max(newest, e.timestamp);
+      if(seen.has(e.id)) continue;
+      seen.add(e.id); fresh++;
+      const txt = e.news || '';
+      const low = txt.toLowerCase();
+      const isXan = low.includes('xanax');
+      const isRef = low.includes('refill');
+      if(!(isXan || isRef)) continue;
+      const idMatch = txt.match(/XID=(\d+)/);
+      if(!idMatch) continue;
+      const mid = idMatch[1];
+      const nameMatch = txt.match(/>([^<]+)<\/a>/);
+      const rec = usage[mid] || (usage[mid] = {xan:0, deposited:0, withdrawn:0, refills:0, points:0, name: nameMatch ? nameMatch[1] : ('#'+mid)});
+      const isWithdrawal = /to themselves from the faction arm/.test(low);
+      const isDeposit = /deposited/.test(low);
+      const isDirectUse = /used .+ of the faction'?s/.test(low);
+      const stockQ = low.match(/deposited\s+(\d+)\s*x/) || low.match(/gave\s+(\d+)\s*x/) || low.match(/(\d+)\s*x\b/);
+      const q = stockQ ? parseInt(stockQ[1], 10) : 1;
+      if(isWithdrawal){ if(isXan) rec.withdrawn += q; continue; }
+      if(isDeposit){ if(isXan) rec.deposited += q; continue; }
+      if(!isDirectUse) continue;
+      if(isRef){
+        rec.refills += 1;
+        const pm = low.match(/used\s+(\d+)\s+of the faction'?s points/);
+        rec.points += pm ? parseInt(pm[1], 10) : 30;
+      }else if(isXan){
+        const xm = low.match(/used\s+(\d+)\s+of the faction'?s/);
+        rec.xan += xm ? parseInt(xm[1], 10) : 1;
+      }
+    }
+    if(onProgress) onProgress(page+1, Object.keys(usage).length);
+    if(fresh === 0 || newest >= upper || newest <= from) break;
+    from = newest;
+  }
+  return usage;
+}
+
+async function fetchProfiles(ids, onProgress){
+  let done = 0, denied = false;
+  for(const id of ids){
+    if(id in S.donators){ done++; continue; }
+    if(denied){ S.donators[id] = false; done++; continue; }
+    try{
+      const d = await apiCall(`user/${id}`, 'profile,icons');
+      if(d.name) S.profileNames[id] = d.name;
+      const icons = d.icons || {};
+      S.donators[id] = Object.values(icons).some(v => /donator|subscriber/i.test(String(v)));
+    }catch(e){
+      S.donators[id] = false;
+      if(e.code === 16 || e.code === 7) denied = true;
+    }
+    done++;
+    if(onProgress) onProgress(done, ids.length);
+  }
+}
+
+async function listChains(){
+  const d = await apiCall('faction', 'chains');
+  const chains = d.chains || {};
+  const sel = $('chainSelect');
+  sel.innerHTML = '<option value="">— select a chain —</option>';
+  const rows = Object.entries(chains).map(([id, c]) => ({id, ...c}))
+    .sort((a, b) => (b.start || 0) - (a.start || 0))
+    .slice(0, 100);
+  for(const c of rows){
+    const len = c.chain ?? c.length ?? '?';
+    const when = c.start ? new Date(c.start*1000).toISOString().slice(0, 16).replace('T', ' ') : '';
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = `#${c.id} — ${len} chain — ${when}`;
+    sel.appendChild(o);
+  }
+  $('loadSelectedBtn').disabled = rows.length === 0;
+  return rows;
+}
+
+async function loadChain(chainId){
+  if(!$('myFaction').value.trim()){ try{ await detectMyFaction(); }catch(e){} }
+  await detectCaps();
+  if(!S.caps.faction) throw new Error('Faction access required. Chain reports are leadership-only data.');
+
+  setStatus('Pulling chain report...', '');
+  let cr, live = null;
+  if(chainId){
+    const d = await apiCall(`torn/${chainId}`, 'chainreport');
+    cr = d.chainreport;
+  }else{
+    const rep = await apiCall('faction', 'chainreport');
+    cr = rep.chainreport;
+    const cur = await apiCall('faction', 'chain').catch(() => null);
+    if(cur && cur.chain && (cur.chain.current || 0) > 0 && (cur.chain.timeout || 0) > 0) live = cur.chain;
+  }
+  if(!cr || !cr.members) throw new Error('No chain report returned. There may be no recent chain, or this chain ID is not readable.');
+
+  const isLive = !!(live && cr.start && Math.abs((live.start || 0) - cr.start) < 180);
+  S.chain = cr;
+  S.live = isLive ? live : null;
+
+  setStatus('Loading faction roster for member names...', '');
+  try{ const rd = await apiCall('faction', 'basic'); if(rd.members) S.roster = rd.members; }catch(e){ S.roster = {}; }
+
+  const openTs = tsFromInput($('armouryOpen').value);
+  const start = openTs ? Math.min(openTs, cr.start) : cr.start;
+  const end = isLive ? now() : (cr.end || now());
+  S.armouryFrom = start;
+  S.armouryTo = end;
+  const stacked = openTs && openTs < cr.start;
+  setStatus(stacked ? 'Reading armoury news from the stacking window through the chain...' : 'Reading faction armoury news for Xanax and refills across the chain window...', '');
+  S.armoury = await fetchArmouryUsage(start, end, (p, n) => setStatus(`Armoury news — page ${p}, ${n} members...`, ''));
+
+  const refillers = Object.entries(S.armoury).filter(([, r]) => (r.refills || 0) > 0).map(([id]) => id);
+  const unnamed = Object.keys(cr.members).filter(id => !(S.roster[id] && S.roster[id].name));
+  const lookups = [...new Set([...refillers, ...unnamed])];
+  if(lookups.length){
+    setStatus(`Resolving ${lookups.length} profiles (donator status + ex-member names)...`, '');
+    await fetchProfiles(lookups, (dn, t) => setStatus(`Profile lookups — ${dn}/${t}...`, ''));
+  }
+
+  build();
+  renderAll();
+
+  const totXan = S.members.reduce((t, m) => t + m.xan, 0);
+  const totRef = S.members.reduce((t, m) => t + m.refills, 0);
+  const len = isLive ? Math.max(cr.chain || 0, live.current || 0) : (cr.chain || 0);
+  if(isLive){
+    $('chainStatus').textContent = `Chain running — ${len} and climbing`;
+    $('chainStatus').className = 'badge live';
+    setStatus(`Live chain at ${len} hits. ${S.members.length} contributors so far, ${totXan} Xanax and ${totRef} refills used. Reload to refresh.`, 'ok');
+  }else{
+    $('chainStatus').textContent = `Chain #${cr.chain || ''} loaded`;
+    $('chainStatus').className = 'badge mode';
+    setStatus(`Loaded ${len}-hit chain. ${S.members.length} contributors, ${totXan} Xanax and ${totRef} refills in the armoury window.`, 'ok');
+  }
+}
+
+const EPH = 25, EXAN = 250, EREFILL_D = 150, EREFILL_R = 100, PTS_PER_REFILL = 30;
+
+function build(){
+  const cr = S.chain;
+  if(!cr) return;
+  const mem = cr.members || {};
+  const ids = new Set([...Object.keys(mem), ...Object.keys(S.armoury)]);
+  const rows = [];
+  for(const id of ids){
+    const m = mem[id] || {};
+    const arm = S.armoury[id] || {xan:0, refills:0, name:null};
+    const hits = m.attacks || 0;
+    const assists = m.assist || 0;
+    const losses = m.loss || 0;
+    const hosp = m.hosp || 0, mug = m.mug || 0, leave = m.leave || 0;
+    const respect = +(m.respect || 0);
+    const xan = arm.xan || 0;
+    const refills = arm.refills || 0;
+    const points = arm.points || refills * PTS_PER_REFILL;
+    const isDon = !!S.donators[id];
+    const xanE = xan * EXAN;
+    const refillE = refills * (isDon ? EREFILL_D : EREFILL_R);
+    const eIn = xanE + refillE;
+    const eSpent = (hits + assists + losses) * EPH;
+    const rosterName = S.roster[id] && S.roster[id].name;
+    const name = rosterName || S.profileNames[id] || arm.name || ('#'+id);
+    rows.push({id, name, hits, assists, losses, hosp, mug, leave, respect, xan, refills, points, xanE, refillE, eIn, eSpent, isDon});
+  }
+  S.members = rows;
+}
+
+function totals(rows){
+  return rows.reduce((a, m) => ({
+    hits: a.hits + m.hits, assists: a.assists + m.assists, losses: a.losses + m.losses,
+    hosp: a.hosp + m.hosp, mug: a.mug + m.mug, leave: a.leave + m.leave,
+    respect: a.respect + m.respect, xan: a.xan + m.xan, points: a.points + m.points,
+    xanE: a.xanE + m.xanE, refillE: a.refillE + m.refillE, eIn: a.eIn + m.eIn, eSpent: a.eSpent + m.eSpent
+  }), {hits:0, assists:0, losses:0, hosp:0, mug:0, leave:0, respect:0, xan:0, points:0, xanE:0, refillE:0, eIn:0, eSpent:0});
+}
+
+function renderAll(){ renderOverview(); renderMembers(); }
+
+function renderOverview(){
+  const cr = S.chain;
+  if(!cr) return;
+  $('emptyOverview').style.display = 'none';
+  $('chainPanel').style.display = 'block';
+  $('splitPanel').style.display = 'block';
+  $('statsGrid').style.display = 'grid';
+
+  const live = S.live;
+  const len = live ? Math.max(cr.chain || 0, live.current || 0) : (cr.chain || 0);
+  const endTs = live ? now() : cr.end;
+
+  $('chainLen').firstChild.textContent = nfmt(len);
+  $('livePill').style.display = live ? 'inline-block' : 'none';
+  $('chainId').textContent = cr.factionID ? 'faction #' + cr.factionID : '';
+  $('chainRespect').textContent = (+(cr.respect || 0)).toLocaleString('en-US', {maximumFractionDigits:2});
+  $('chainStart').textContent = fmtTime(cr.start);
+  $('chainEnd').textContent = live ? 'in progress' : fmtTime(cr.end);
+  $('chainDur').textContent = dur((endTs || now()) - cr.start);
+  $('chainContrib').textContent = Object.keys(cr.members || {}).length;
+  const stacked = S.armouryFrom && S.armouryFrom < cr.start;
+  $('stackMeta').style.display = stacked ? 'block' : 'none';
+  if(stacked) $('stackFrom').textContent = fmtTime(S.armouryFrom);
+
+  const t = totals(S.members);
+  const fin = t.hosp + t.mug + t.leave;
+  const bar = $('splitBar');
+  if(fin > 0){
+    const seg = (cls, val) => { const pct = val/fin*100; return pct > 0 ? `<div class="${cls}" style="width:${pct}%">${pct >= 8 ? Math.round(pct)+'%' : ''}</div>` : ''; };
+    bar.innerHTML = seg('seg-hosp', t.hosp) + seg('seg-mug', t.mug) + seg('seg-leave', t.leave);
+  }else{
+    bar.innerHTML = '<div style="width:100%;background:var(--panel-2);color:var(--text-faint)">no finisher data</div>';
+  }
+  $('legHosp').textContent = nfmt(t.hosp);
+  $('legMug').textContent = nfmt(t.mug);
+  $('legLeave').textContent = nfmt(t.leave);
+  $('legTotal').textContent = nfmt(fin);
+  $('legHits').textContent = nfmt(t.hits);
+
+  $('sHits').textContent = nfmt(t.hits);
+  $('sXan').textContent = nfmt(t.xan);
+  $('sPts').textContent = nfmt(t.points);
+  $('sEin').textContent = nfmt(t.eIn);
+  $('sEspent').textContent = nfmt(t.eSpent);
+}
+
+function renderMembers(){
+  const body = $('memberBody');
+  if(!S.members.length){ $('emptyMembers').style.display = 'block'; body.innerHTML = ''; return; }
+  $('emptyMembers').style.display = 'none';
+
+  const filter = $('memberFilter').value.trim().toLowerCase();
+  const hideZero = $('hideZero').checked;
+  const rows = S.members.filter(m => (!filter || m.name.toLowerCase().includes(filter)) && (!hideZero || m.hits > 0));
+
+  const k = S.sortKey, dir = S.sortDir;
+  rows.sort((a, b) => {
+    if(k === 'name') return a.name.localeCompare(b.name) * (-dir);
+    return ((a[k] || 0) - (b[k] || 0)) * dir;
+  });
+  document.querySelectorAll('#memberTable thead th.sortable').forEach(th => th.classList.toggle('sorted', th.dataset.key === k));
+
+  let html = '';
+  rows.forEach((m, i) => {
+    html += `<tr>
+      <td class="rank">${i+1}</td>
+      <td class="name"><a class="plink" href="https://www.torn.com/profiles.php?XID=${m.id}" target="_blank" rel="noopener">${esc(m.name)}</a>${m.isDon ? ' <span style="color:var(--xan);font-size:10px">◆</span>' : ''}</td>
+      <td class="num">${nfmt(m.hits)}</td>
+      <td class="num">${m.assists || '—'}</td>
+      <td class="num cell-hosp">${m.losses || '—'}</td>
+      <td class="num cell-hosp">${nfmt(m.hosp)}</td>
+      <td class="num cell-mug">${nfmt(m.mug)}</td>
+      <td class="num cell-leave">${nfmt(m.leave)}</td>
+      <td class="num">${m.respect.toLocaleString('en-US', {maximumFractionDigits:2})}</td>
+      <td class="num cell-xan">${nfmt(m.xan)}</td>
+      <td class="num cell-pt">${nfmt(m.points)}</td>
+      <td class="num cell-e">${nfmt(m.eIn)}</td>
+      <td class="num">${nfmt(m.eSpent)}</td>
+    </tr>`;
+  });
+
+  const t = totals(rows);
+  html += `<tr class="total">
+    <td></td><td>FACTION TOTAL</td>
+    <td class="num">${nfmt(t.hits)}</td>
+    <td class="num">${nfmt(t.assists)}</td>
+    <td class="num cell-hosp">${nfmt(t.losses)}</td>
+    <td class="num cell-hosp">${nfmt(t.hosp)}</td>
+    <td class="num cell-mug">${nfmt(t.mug)}</td>
+    <td class="num cell-leave">${nfmt(t.leave)}</td>
+    <td class="num">${t.respect.toLocaleString('en-US', {maximumFractionDigits:2})}</td>
+    <td class="num cell-xan">${nfmt(t.xan)}</td>
+    <td class="num cell-pt">${nfmt(t.points)}</td>
+    <td class="num cell-e">${nfmt(t.eIn)}</td>
+    <td class="num">${nfmt(t.eSpent)}</td>
+  </tr>`;
+
+  body.innerHTML = html;
+  $('memberCount').textContent = `${rows.length} member${rows.length === 1 ? '' : 's'} shown · ◆ = donator (150 E/refill)`;
+}
+
+function memberMatrix(){
+  const head = ['Member','User ID','Hits','Assists','Losses','Hosp','Mug','Leave','Respect','Xanax','Points','Xan E','Refill E','E In','E Spent','Donator'];
+  const rows = [...S.members].sort((a, b) => b.hits - a.hits);
+  const body = rows.map(m => [
+    m.name, m.id, m.hits, m.assists, m.losses, m.hosp, m.mug, m.leave, +m.respect.toFixed(2),
+    m.xan, m.points, m.xanE, m.refillE, m.eIn, m.eSpent, m.isDon ? 'yes' : 'no'
+  ]);
+  const t = totals(S.members);
+  body.push(['FACTION TOTAL', '', t.hits, t.assists, t.losses, t.hosp, t.mug, t.leave, +t.respect.toFixed(2), t.xan, t.points, t.xanE, t.refillE, t.eIn, t.eSpent, '']);
+  return {head, body};
+}
+
+function exportCsv(){
+  const {head, body} = memberMatrix();
+  const cell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const csv = [head, ...body].map(r => r.map(cell).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `chain_${(S.chain && S.chain.chain) || ''}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+}
+
+function exportXlsx(){
+  const {head, body} = memberMatrix();
+  const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
+  ws['!cols'] = [16, 10, 7, 7, 7, 7, 7, 7, 10, 8, 9, 10, 10, 11, 11, 9].map(w => ({wch:w}));
+  const wb = XLSX.utils.book_new();
+  const name = ('Chain ' + ((S.chain && S.chain.chain) || '')).slice(0, 28);
+  XLSX.utils.book_append_sheet(wb, ws, name || 'Chain');
+  XLSX.writeFile(wb, `chain_report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+function persist(msg){
+  const s = {
+    myFaction: $('myFaction').value.trim(),
+    tct: $('tct').checked,
+    saveKey: $('saveKey').checked,
+    apiKey: $('saveKey').checked ? $('apiKey').value.trim() : ''
+  };
+  try{
+    localStorage.setItem('chainfeed', JSON.stringify(s));
+    if(!$('saveKey').checked) sessionStorage.setItem('chainfeedKey', $('apiKey').value.trim());
+    if(msg) setStatus('Setup saved on this device.', 'ok');
+  }catch(e){ if(msg) setStatus('Could not save: ' + e.message, 'err'); }
+}
+
+function restore(){
+  try{
+    const s = JSON.parse(localStorage.getItem('chainfeed') || '{}');
+    $('myFaction').value = s.myFaction || '';
+    if(s.tct !== undefined) $('tct').checked = s.tct;
+    $('saveKey').checked = !!s.saveKey;
+    $('apiKey').value = s.apiKey || sessionStorage.getItem('chainfeedKey') || '';
+  }catch(e){}
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.view));
+}));
+
+document.querySelectorAll('#memberTable thead th.sortable').forEach(th => th.addEventListener('click', () => {
+  const k = th.dataset.key;
+  S.sortDir = (S.sortKey === k) ? -S.sortDir : -1;
+  S.sortKey = k;
+  renderMembers();
+}));
+
+$('loadLatestBtn').addEventListener('click', async () => {
+  try{ await loadChain(null); }catch(e){ setStatus(e.message, 'err'); }
+});
+
+$('listChainsBtn').addEventListener('click', async () => {
+  try{
+    setStatus('Listing recent chains...', '');
+    if(!$('myFaction').value.trim()){ try{ await detectMyFaction(); }catch(e){} }
+    await detectCaps();
+    if(!S.caps.faction) throw new Error('Faction access required to list chains.');
+    const r = await listChains();
+    setStatus(`Found ${r.length} recent chains. Pick one and press Load selected.`, 'ok');
+  }catch(e){ setStatus(e.message, 'err'); }
+});
+
+$('loadSelectedBtn').addEventListener('click', async () => {
+  const id = $('chainSelect').value;
+  if(!id){ setStatus('Pick a chain from the list first.', 'warn'); return; }
+  try{ await loadChain(id); }catch(e){ setStatus(e.message, 'err'); }
+});
+
+$('saveBtn').addEventListener('click', () => persist(true));
+$('exportCsv').addEventListener('click', exportCsv);
+$('exportXlsx').addEventListener('click', exportXlsx);
+$('memberFilter').addEventListener('input', renderMembers);
+$('hideZero').addEventListener('change', renderMembers);
+$('tct').addEventListener('change', () => { if(S.chain) renderOverview(); });
+
+restore();
+</script>
+</body>
+</html>

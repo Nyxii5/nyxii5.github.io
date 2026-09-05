@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HITFEED — Torn War Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+  :root{
+    --bg:#0a0b0f;
+    --bg-2:#0e1016;
+    --panel:#13151c;
+    --panel-2:#181b24;
+    --border:#22252f;
+    --border-soft:#1a1c25;
+    --text:#eceef2;
+    --text-dim:#8b8fa3;
+    --text-faint:#5a5e6e;
+    --accent:#6c7dfa;
+    --accent-soft:#6c7dfa1a;
+    --accent-bright:#8b98ff;
+    --win:#3ecf8e;
+    --loss:#f2665a;
+    --amber:#f0b429;
+    --neutral:#7b8194;
+    --enemy:#f2665a;
+    --hosp:#4fb3d9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #14162280 0%, transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, #10122070 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent); color:#fff;}
+  .wrap{max-width:1240px; margin:0 auto; padding:24px 20px 60px;}
+
+  header{display:flex; align-items:center; gap:14px; margin-bottom:22px; flex-wrap:wrap;}
+  .logo{
+    width:38px; height:38px; border-radius:10px; flex:none;
+    background:linear-gradient(140deg, var(--accent), #4d5ed8);
+    display:grid; place-items:center; font-weight:800; font-size:13px; letter-spacing:.5px;
+  }
+  h1{font-size:19px; margin:0; font-weight:700; letter-spacing:-.2px;}
+  .sub{font-size:12px; color:var(--text-faint); margin-top:1px;}
+  .badges{margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .badge{
+    font-size:11px; font-weight:600; padding:5px 10px; border-radius:20px;
+    background:var(--panel); border:1px solid var(--border); color:var(--text-dim);
+  }
+  .badge.live{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
+  .badge.mode{color:var(--accent-bright); border-color:#6c7dfa40; background:var(--accent-soft);}
+  .badge.warn{color:var(--amber); border-color:#f0b42940; background:#f0b42912;}
+
+  .panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:18px; margin-bottom:16px;
+  }
+  .panel h2{
+    font-size:11px; text-transform:uppercase; letter-spacing:1.2px;
+    color:var(--text-faint); margin:0 0 14px; font-weight:600;
+  }
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px;}
+  label.field{display:block;}
+  label.field span{display:block; font-size:11px; color:var(--text-dim); margin-bottom:5px; font-weight:500;}
+  input[type=text], input[type=password], input[type=datetime-local]{
+    width:100%; padding:9px 11px; border-radius:8px; background:var(--bg-2);
+    border:1px solid var(--border); color:var(--text); font-size:13px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  input:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent;}
+  .btnrow{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap; align-items:center;}
+  button{
+    padding:9px 15px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel-2); color:var(--text); font-size:13px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#1d2130;}
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  button.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  button.primary:hover:not(:disabled){background:var(--accent-bright); border-color:var(--accent-bright);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  button.small{padding:6px 11px; font-size:12px;}
+  .checkline{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-dim); cursor:pointer;}
+  .checkline input{accent-color:var(--accent);}
+  .status{margin-top:12px; font-size:12px; color:var(--text-dim); min-height:16px;}
+  .status.ok{color:var(--win);} .status.err{color:var(--loss);} .status.warn{color:var(--amber);}
+  .hint{font-size:11px; color:var(--text-faint); margin-top:6px; line-height:1.5;}
+
+  nav.tabs{display:flex; gap:4px; margin-bottom:16px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
+  nav.tabs button{
+    background:none; border:none; border-bottom:2px solid transparent; border-radius:0;
+    padding:10px 14px; color:var(--text-faint); font-size:13px;
+  }
+  nav.tabs button:hover:not(:disabled){background:none; color:var(--text-dim); border-color:var(--border);}
+  nav.tabs button.on{color:var(--text); border-bottom-color:var(--accent);}
+  nav.tabs button:disabled{opacity:.3;}
+  .view{display:none;} .view.on{display:block;}
+
+  .score{margin-bottom:16px;}
+  .scorehead{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; gap:12px; flex-wrap:wrap;}
+  .sname{font-size:13px; font-weight:600;}
+  .sname.us{color:var(--accent-bright);} .sname.them{color:var(--enemy);}
+  .sval{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600;}
+  .track{
+    position:relative; height:34px; border-radius:8px; overflow:hidden;
+    background:var(--bg-2); border:1px solid var(--border-soft); display:flex;
+  }
+  .fill-us{background:linear-gradient(90deg,#4d5ed8,var(--accent)); transition:width .5s ease;}
+  .fill-them{background:linear-gradient(90deg,#8c3a33,var(--enemy)); transition:width .5s ease; margin-left:auto;}
+  .target-mark{position:absolute; top:0; bottom:0; width:2px; background:var(--amber); opacity:.9;}
+  .target-lab{
+    position:absolute; top:100%; margin-top:4px; transform:translateX(-50%);
+    font-size:10px; color:var(--amber); font-family:'JetBrains Mono',monospace; white-space:nowrap;
+  }
+  .scorefoot{display:flex; gap:18px; margin-top:22px; flex-wrap:wrap; font-size:12px; color:var(--text-dim);}
+  .scorefoot b{color:var(--text); font-family:'JetBrains Mono',monospace; font-weight:600;}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px; margin-bottom:16px;}
+  .stat{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:13px 14px;}
+  .stat .v{font-size:23px; font-weight:700; font-family:'JetBrains Mono',monospace; letter-spacing:-.5px;}
+  .stat .l{font-size:10px; text-transform:uppercase; letter-spacing:.9px; color:var(--text-faint); margin-top:3px; font-weight:600;}
+  .stat.win .v{color:var(--win);} .stat.loss .v{color:var(--loss);}
+  .stat.amber .v{color:var(--amber);} .stat.accent .v{color:var(--accent-bright);}
+
+  .spark{display:flex; align-items:flex-end; gap:2px; height:56px; margin-top:6px;}
+  .spark div{flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:2px; opacity:.85;}
+  .spark div.quiet{background:var(--border);}
+  .sparkaxis{display:flex; justify-content:space-between; font-size:10px; color:var(--text-faint); margin-top:6px; font-family:'JetBrains Mono',monospace;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.9px;
+    color:var(--text-faint); font-weight:600; padding:8px 10px;
+    border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  thead th.sortable{cursor:pointer; user-select:none;}
+  thead th.sortable:hover{color:var(--text-dim);}
+  thead th.sorted{color:var(--accent-bright);}
+  tbody td{padding:9px 10px; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
+  tbody tr:hover{background:#ffffff05;}
+  td.num, th.num{text-align:right; font-family:'JetBrains Mono',monospace;}
+  .rank{color:var(--text-faint); font-family:'JetBrains Mono',monospace; font-size:12px;}
+  .name{font-weight:600; position:relative;}
+  .bar{position:absolute; left:0; bottom:-4px; height:2px; background:var(--accent); opacity:.5; border-radius:2px;}
+  .plink{color:var(--text); text-decoration:none; border-bottom:1px dotted var(--text-faint);}
+  .plink:hover{color:var(--accent-bright); border-color:var(--accent-bright);}
+  .tag{
+    display:inline-block; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:600;
+    background:var(--panel-2); color:var(--text-dim); border:1px solid var(--border);
+  }
+  .tag.hit{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
+  .tag.assist{color:var(--accent-bright); border-color:#6c7dfa40; background:var(--accent-soft);}
+  .tag.loss{color:var(--loss); border-color:#f2665a40; background:#f2665a12;}
+  .tag.defend_lost{color:var(--amber); border-color:#f0b42940; background:#f0b42912;}
+  .tag.okay{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
+  .tag.hospital{color:var(--hosp); border-color:#4fb3d940; background:#4fb3d912;}
+  .tag.travel{color:var(--neutral);}
+  .idle-ok{color:var(--win);} .idle-warn{color:var(--amber);} .idle-cold{color:var(--loss);}
+  .tblwrap{overflow:auto; max-height:620px;}
+  .tblfoot{display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:10px; flex-wrap:wrap;}
+  .count{font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
+  .empty{padding:34px; text-align:center; color:var(--text-faint); font-size:13px;}
+  .filterrow{display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;}
+  .filterrow input[type=text]{max-width:220px; font-family:inherit;}
+  footer{margin-top:26px; font-size:11px; color:var(--text-faint); text-align:center; line-height:1.6;}
+  .notefoot{font-size:11px; color:var(--text-faint); line-height:1.6; margin-top:12px;}
+  @media (max-width:640px){
+    .wrap{padding:16px 12px 40px;}
+    .sval{font-size:18px;}
+    .stat .v{font-size:19px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">HF</div>
+  <div>
+    <h1>Hitfeed</h1>
+    <div class="sub">Torn war command</div>
+  </div>
+  <div class="badges">
+    <span class="badge mode" id="modeBadge">No key</span>
+    <span class="badge" id="warStatus">Not run yet</span>
+  </div>
+</header>
+
+<section class="panel">
+  <h2>Setup</h2>
+  <div class="grid">
+    <label class="field"><span>API key</span><input type="password" id="apiKey" placeholder="your Torn API key" autocomplete="off"></label>
+    <label class="field"><span>Your faction ID</span><input type="text" id="myFaction" placeholder="auto"></label>
+    <label class="field"><span>Enemy faction ID</span><input type="text" id="enemyFaction" placeholder="auto"></label>
+    <label class="field"><span>War start</span><input type="datetime-local" id="warStart"></label>
+    <label class="field"><span>War end (blank = now)</span><input type="datetime-local" id="warEnd"></label>
+    <label class="field"><span>Armoury: days before start</span><input type="text" id="armouryLookback" placeholder="3"></label>
+    <label class="field"><span>War end (blank = ongoing)</span><input type="datetime-local" id="warEnd"></label>
+  </div>
+  <div class="btnrow">
+    <button class="primary" id="fetchBtn">Fetch hits</button>
+    <button id="detectBtn">Find current war</button>
+    <button id="lastWarBtn">Load last war</button>
+    <button id="saveBtn">Save setup</button>
+    <label class="checkline"><input type="checkbox" id="warOnly" checked> War hits only</label>
+    <label class="checkline"><input type="checkbox" id="autoRefresh"> Auto-refresh (60s)</label>
+    <label class="checkline"><input type="checkbox" id="tct" checked> Show times in TCT</label>
+    <label class="checkline"><input type="checkbox" id="saveKey"> Remember key on this device</label>
+  </div>
+  <div class="status" id="statusMsg">Enter a key and press Fetch hits. Hitfeed reads whatever that key can reach — a faction key unlocks the whole roster, a personal key shows your own hits.</div>
+  <div class="hint" id="capHint"></div>
+</section>
+
+<nav class="tabs">
+  <button data-view="overview" class="on">Overview</button>
+  <button data-view="roster" id="tabRoster">Faction</button>
+  <button data-view="feed">My hits</button>
+  <button data-view="targets">Targets</button>
+</nav>
+
+<section class="view on" id="view-overview">
+  <div class="panel score" id="scorePanel" style="display:none;">
+    <h2>Ranked war score</h2>
+    <div class="scorehead">
+      <div><div class="sname us" id="usName">Us</div><div class="sval" id="usScore">0</div></div>
+      <div style="text-align:right;"><div class="sname them" id="themName">Them</div><div class="sval" id="themScore">0</div></div>
+    </div>
+    <div class="track" id="track">
+      <div class="fill-us" id="fillUs" style="width:0%"></div>
+      <div class="fill-them" id="fillThem" style="width:0%"></div>
+      <div class="target-mark" id="targetMark" style="display:none;"></div>
+    </div>
+    <div class="target-lab" id="targetLab" style="display:none;"></div>
+    <div class="scorefoot">
+      <div>Lead <b id="leadVal">—</b></div>
+      <div>Target <b id="targetVal">—</b></div>
+      <div>Our rate <b id="rateVal">—</b> pts/hr</div>
+      <div>Est. finish <b id="etaVal">—</b></div>
+    </div>
+  </div>
+
+  <div class="stats" id="statsGrid" style="display:none;">
+    <div class="stat accent"><div class="v" id="statMembers">0</div><div class="l">Active</div></div>
+    <div class="stat win"><div class="v" id="statHits">0</div><div class="l">Hits</div></div>
+    <div class="stat"><div class="v" id="statAssists">0</div><div class="l">Assists</div></div>
+    <div class="stat loss"><div class="v" id="statLosses">0</div><div class="l">Losses</div></div>
+    <div class="stat amber"><div class="v" id="statTaken">0</div><div class="l">Hits taken</div></div>
+    <div class="stat"><div class="v" id="statRespect">0</div><div class="l">Respect</div></div>
+    <div class="stat"><div class="v" id="statRate">0</div><div class="l">Hits / hr</div></div>
+    <div class="stat"><div class="v" id="statRecent">0</div><div class="l">Last 15 min</div></div>
+  </div>
+
+  <div class="panel" id="sparkPanel" style="display:none;">
+    <h2>Momentum — hits per 10 minutes</h2>
+    <div class="spark" id="spark"></div>
+    <div class="sparkaxis"><span id="sparkFrom"></span><span id="sparkTo">now</span></div>
+  </div>
+
+  <div class="empty" id="emptyOverview">Nothing loaded yet. Press Fetch hits.</div>
+</section>
+
+<section class="view" id="view-roster">
+  <div class="panel">
+    <h2>Leaderboard</h2>
+    <div class="filterrow">
+      <input type="text" id="rosterFilter" placeholder="Filter members">
+      <label class="checkline"><input type="checkbox" id="hideIdle"> Hide members with no hits</label>
+    </div>
+    <div class="tblwrap">
+      <table id="rosterTable">
+        <thead><tr>
+          <th class="num">#</th>
+          <th class="sortable" data-key="name">Member</th>
+          <th class="num sortable sorted" data-key="hits">Hits</th>
+          <th class="num sortable" data-key="hosp">Hosp</th>
+          <th class="num sortable" data-key="mug">Mug</th>
+          <th class="num sortable" data-key="leave">Leave</th>
+          <th class="num sortable" data-key="assists">Assists</th>
+          <th class="num sortable" data-key="losses">Losses</th>
+          <th class="num sortable" data-key="taken">Taken</th>
+          <th class="num sortable" data-key="respect">Respect</th>
+          <th class="num sortable" data-key="ff">Avg FF</th>
+          <th class="num sortable" data-key="last">Last hit</th>
+        </tr></thead>
+        <tbody id="rosterBody"></tbody>
+      </table>
+    </div>
+    <div class="tblfoot">
+      <span class="count" id="rosterCount"></span>
+      <span>
+        <button class="small" id="exportRosterCsv">Export CSV</button>
+        <button class="small" id="exportRosterXlsx">Export Excel</button>
+        <button class="small primary" id="exportWarReport" disabled title="Leadership only — needs a faction-access key">War Report</button>
+      </span>
+    </div>
+    <div class="filterrow" style="margin-top:12px;">
+      <label class="checkline" style="cursor:pointer;">
+        <input type="file" id="masterFile" accept=".xlsx,.xlsm" style="max-width:230px; font-family:inherit;">
+      </label>
+      <button class="small" id="clearMaster" style="display:none;">Clear</button>
+    </div>
+    <div class="notefoot" id="masterInfo">Optional: upload your running war-report doc and the new report is added as a fresh tab (after the Blank tab, newest first), then the whole document is saved back.</div>
+    <div class="notefoot" id="rosterNote"></div>
+  </div>
+  <div class="empty" id="emptyRoster">No faction data. This view needs a key with faction API access.</div>
+</section>
+
+<section class="view" id="view-feed">
+  <div class="panel">
+    <h2>Your hits</h2>
+    <div class="tblwrap">
+      <table>
+        <thead><tr>
+          <th>Time</th><th>Target</th><th>Their faction</th><th>Result</th><th class="num">Respect</th><th class="num">FF</th>
+        </tr></thead>
+        <tbody id="feedBody"></tbody>
+      </table>
+    </div>
+    <div class="tblfoot">
+      <span class="count" id="feedCount"></span>
+      <button class="small" id="exportFeedCsv">Export CSV</button>
+    </div>
+    <div class="notefoot">
+      Hospitalize, Mug and Leave aren't in the attack record — they're resolved by matching your personal event log against each hit's target and timestamp. A hit with no matching log entry shows as a plain Hit. This only ever works for the key entered above, so on the faction board every other member's hits stay uncategorised.
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-targets">
+  <div class="panel">
+    <h2>Enemy roster</h2>
+    <div class="filterrow">
+      <input type="text" id="targetFilter" placeholder="Filter targets">
+      <label class="checkline"><input type="checkbox" id="onlyAttackable" checked> Only show attackable</label>
+      <button class="small" id="refreshTargets">Refresh roster</button>
+    </div>
+    <div class="tblwrap">
+      <table id="targetTable">
+        <thead><tr>
+          <th class="sortable" data-tkey="name">Name</th>
+          <th class="num sortable" data-tkey="level">Level</th>
+          <th class="sortable" data-tkey="until">Status</th>
+          <th class="num sortable" data-tkey="lastAction">Last action</th>
+          <th>Attack</th>
+        </tr></thead>
+        <tbody id="targetBody"></tbody>
+      </table>
+    </div>
+    <div class="tblfoot"><span class="count" id="targetCount"></span></div>
+    <div class="notefoot">Pulled from the enemy faction's public profile, so it works on any key. Hospital timers count down live; the list re-sorts as people come out.</div>
+  </div>
+  <div class="empty" id="emptyTargets">Set an enemy faction ID, then press Refresh roster.</div>
+</section>
+
+<footer>
+  Requests go straight from this page to api.torn.com with the key you type in. Nothing is sent anywhere else, and nothing is stored off this device.
+</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const S = {
+  attacks: [],
+  personal: [],
+  outcomes: {},
+  armoury: {},
+  roster: {},
+  donators: {},
+  masterWb: null,
+  masterName: null,
+  logDenied: false,
+  members: [],
+  feedRows: [],
+  targets: [],
+  war: null,
+  caps: {faction:false, personal:false, level:null, name:null},
+  sortKey:'hits', sortDir:-1,
+  tSortKey:'until', tSortDir:1,
+  lastFetchTo: 0
+};
+let refreshTimer = null, tickTimer = null;
+
+function setStatus(msg, cls){
+  const el = $('statusMsg');
+  el.textContent = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+}
+function useTct(){ return $('tct').checked; }
+function fmtTime(ts){
+  if(!ts) return '—';
+  const d = new Date(ts*1000);
+  return useTct()
+    ? d.toLocaleString('en-GB', {timeZone:'UTC', hour12:false}).replace(',','') + ' TCT'
+    : d.toLocaleString();
+}
+function toEpoch(v){
+  if(!v) return null;
+  return Math.floor(new Date(useTct() ? v + 'Z' : v).getTime()/1000);
+}
+function fromEpoch(ts){
+  const d = new Date(ts*1000);
+  if(useTct()) return d.toISOString().slice(0,16);
+  const off = d.getTimezoneOffset()*60000;
+  return new Date(ts*1000 - off).toISOString().slice(0,16);
+}
+function dur(secs){
+  if(secs == null) return '—';
+  const s = Math.max(0, Math.floor(secs));
+  if(s < 60) return s + 's';
+  if(s < 3600) return Math.floor(s/60) + 'm';
+  if(s < 86400) return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  return Math.floor(s/86400) + 'd ' + Math.floor((s%86400)/3600) + 'h';
+}
+function esc(s){
+  return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+const now = () => Math.floor(Date.now()/1000);
+
+const Q = {last:0, gap:700, window:[], gate:Promise.resolve()};
+function budget(){
+  const cut = Date.now() - 60000;
+  Q.window = Q.window.filter(t => t > cut);
+  return Q.window.length;
+}
+function apiCall(path, selections, params){
+  const run = Q.gate.then(async () => {
+    const wait = Q.gap - (Date.now() - Q.last);
+    if(wait > 0) await new Promise(r => setTimeout(r, wait));
+    return rawCall(path, selections, params);
+  });
+  Q.gate = run.then(() => {}, () => {});
+  return run;
+}
+async function rawCall(path, selections, params, attempt = 0){
+  const key = $('apiKey').value.trim();
+  if(!key) throw new Error('Enter your API key first.');
+  const usp = new URLSearchParams({key, selections, comment:'Hitfeed', ...(params||{})});
+  Q.last = Date.now(); Q.window.push(Q.last);
+  let data;
+  try{
+    const res = await fetch(`https://api.torn.com/${path}/?${usp.toString()}`);
+    data = await res.json();
+  }catch(e){
+    if(attempt < 2){
+      await new Promise(r => setTimeout(r, 1500 * (attempt+1)));
+      return rawCall(path, selections, params, attempt+1);
+    }
+    throw new Error('Network error reaching api.torn.com — check your connection.');
+  }
+  if(data.error){
+    const c = data.error.code;
+    if(c === 5 && attempt < 3){
+      await new Promise(r => setTimeout(r, 4000 * (attempt+1)));
+      return rawCall(path, selections, params, attempt+1);
+    }
+    const e = new Error(explainError(c, data.error.error));
+    e.code = c;
+    throw e;
+  }
+  return data;
+}
+function explainError(code, msg){
+  const map = {
+    2:'That key was rejected. Check for a typo or a stray space.',
+    5:'Torn is rate-limiting this key. Wait a minute and try again.',
+    6:'Torn does not recognise that ID.',
+    7:'This key cannot read that faction — you need API access from a faction leader.',
+    9:'Torn API is in maintenance mode. Try again shortly.',
+    10:'That key has been paused by its owner.',
+    13:'That key is inactive because the account has not logged in for a while.',
+    16:'This key does not have a high enough access level for that data.',
+    18:'That key has been paused by its owner.'
+  };
+  return map[code] || `Torn API error ${code}: ${msg}`;
+}
+
+async function detectCaps(){
+  const caps = {faction:false, personal:false, level:null, name:null, notes:[]};
+  try{
+    const info = await apiCall('key', 'info');
+    caps.level = info.access_level;
+    caps.name = info.access_type;
+    caps.selections = info.selections || {};
+  }catch(e){
+    caps.notes.push('Key info unavailable: ' + e.message);
+  }
+  const probeFrom = now() - 600;
+  try{
+    await apiCall('user', 'attacks', {from: probeFrom, to: now()});
+    caps.personal = true;
+  }catch(e){ caps.notes.push('Personal attacks: ' + e.message); }
+  try{
+    await apiCall('faction', 'attacks', {from: probeFrom, to: now()});
+    caps.faction = true;
+  }catch(e){ caps.notes.push('Faction attacks: ' + e.message); }
+  S.caps = caps;
+  const b = $('modeBadge');
+  if(caps.faction){ b.textContent = 'Faction key'; b.className = 'badge mode'; }
+  else if(caps.personal){ b.textContent = 'Personal key'; b.className = 'badge warn'; }
+  else { b.textContent = 'Limited key'; b.className = 'badge warn'; }
+  $('tabRoster').disabled = !caps.faction;
+  $('exportWarReport').disabled = !caps.faction;
+  $('exportWarReport').title = caps.faction ? 'Generate the payout report' : 'Leadership only — needs a faction-access key';
+  $('capHint').textContent = caps.faction
+    ? 'Faction access confirmed — the whole roster is visible.'
+    : caps.personal
+      ? 'This key reads your own hits only. For the faction leaderboard, ask a leader to grant API access and use a full-access key.'
+      : 'This key cannot read attack data. Create a full-access key at Settings → API Key on torn.com.';
+  return caps;
+}
+
+async function detectMyFaction(){
+  const d = await apiCall('user', 'profile');
+  if(d.faction && d.faction.faction_id){
+    $('myFaction').value = d.faction.faction_id;
+    return String(d.faction.faction_id);
+  }
+  throw new Error('That account is not in a faction — enter a faction ID manually.');
+}
+async function getWars(){
+  try{ const d = await apiCall('faction','rankedwars'); if(d.rankedwars) return {wars:d.rankedwars, source:'faction'}; }catch(e){}
+  const d = await apiCall('torn','rankedwars');
+  return {wars:d.rankedwars || {}, source:'torn'};
+}
+async function findWar(mode){
+  if(!$('myFaction').value.trim()) await detectMyFaction();
+  const myId = $('myFaction').value.trim();
+  const {wars, source} = await getWars();
+  const mine = Object.entries(wars)
+    .filter(([,w]) => Object.keys(w.factions||{}).includes(String(myId)));
+  const pick = mode === 'last'
+    ? mine.filter(([,w]) => w.war && w.war.end).sort((a,b) => b[1].war.end - a[1].war.end)[0]
+    : mine.filter(([,w]) => w.war && !w.war.end).sort((a,b) => b[1].war.start - a[1].war.start)[0];
+  if(!pick) throw new Error(mode === 'last' ? 'No finished ranked war found for this faction.' : 'No active ranked war found. Set the start time by hand, or load the last war.');
+  const [, w] = pick;
+  const ids = Object.keys(w.factions);
+  const enemyId = ids.find(i => i !== String(myId)) || ids[0];
+  $('enemyFaction').value = enemyId;
+  $('warStart').value = fromEpoch(w.war.start);
+  $('warEnd').value = w.war.end ? fromEpoch(w.war.end) : '';
+  S.war = {
+    start: w.war.start, end: w.war.end || null, target: w.war.target,
+    us: {id: myId, ...(w.factions[myId] || {})},
+    them: {id: enemyId, ...(w.factions[enemyId] || {})}
+  };
+  return S.war;
+}
+async function refreshWarScore(){
+  const myId = $('myFaction').value.trim();
+  const enemyId = $('enemyFaction').value.trim();
+  if(!myId) return;
+  try{
+    const {wars} = await getWars();
+    const found = Object.values(wars).find(w => {
+      const ids = Object.keys(w.factions||{});
+      return ids.includes(String(myId)) && (!enemyId || ids.includes(String(enemyId)));
+    });
+    if(!found) return;
+    const ids = Object.keys(found.factions);
+    const them = ids.find(i => i !== String(myId)) || ids[0];
+    S.war = {
+      start: found.war.start, end: found.war.end || null, target: found.war.target,
+      us: {id: myId, ...found.factions[myId]}, them: {id: them, ...found.factions[them]}
+    };
+  }catch(e){ }
+}
+
+async function pageAttacks(base, fromTs, toTs, onProgress){
+  const upper = toTs || now();
+  let from = fromTs;
+  const all = [], seen = new Set(), pages = [];
+  for(let page = 1; page <= 120; page++){
+    const data = await apiCall(base, 'attacks', {from, to: upper});
+    const list = Object.entries(data.attacks || {}).map(([id,a]) => ({id, ...a}));
+    if(!list.length){ pages.push({page, got:0, fresh:0}); break; }
+    list.sort((a,b) => a.timestamp_started - b.timestamp_started);
+    let fresh = 0;
+    for(const a of list) if(!seen.has(a.id)){ seen.add(a.id); all.push(a); fresh++; }
+    const maxTs = list[list.length-1].timestamp_started;
+    pages.push({page, got:list.length, fresh, upTo: fmtTime(maxTs)});
+    if(onProgress) onProgress(page, all.length, maxTs);
+    if(fresh === 0 || maxTs >= upper || maxTs <= from) break;
+    from = maxTs;
+  }
+  return all;
+}
+async function fetchOutcomes(fromTs, toTs){
+  const map = {};
+  let to = toTs || now();
+  for(let page = 0; page < 25; page++){
+    let data;
+    try{ data = await apiCall('user','log',{from: fromTs, to}); }
+    catch(e){ if(page === 0 && e.code === 16) S.logDenied = true; break; }
+    const entries = Object.values(data.log || {});
+    if(!entries.length) break;
+    entries.sort((a,b) => b.timestamp - a.timestamp);
+    for(const e of entries){
+      const t = ((e.title || '') + ' ' + (e.category || '')).toLowerCase();
+      let kind = null;
+      if(t.includes('hospitalize') || t.includes('hospitalise')) kind = 'hospitalize';
+      else if(t.includes('mug')) kind = 'mug';
+      else if(t.includes('leave')) kind = 'leave';
+      if(!kind) continue;
+      const d = e.data || {};
+      const defId = d.defender || d.defender_id || d.target || d.victim;
+      if(defId) map[`${defId}_${e.timestamp}`] = kind;
+    }
+    const oldest = entries[entries.length-1].timestamp;
+    if(oldest <= fromTs || oldest >= to) break;
+    to = oldest;
+  }
+  return map;
+}
+
+async function fetchArmouryUsage(fromTs, toTs, onProgress){
+  const usage = {};
+  const upper = toTs || now();
+  let from = fromTs;
+  const seen = new Set();
+  for(let page = 0; page < 200; page++){
+    let data;
+    try{ data = await apiCall('faction','armorynews',{from, to: upper, sort:'asc'}); }
+    catch(e){ if(page === 0) throw e; break; }
+    const news = data.armorynews || {};
+    const entries = Object.entries(news).map(([id,n]) => ({id, ...n}));
+    if(!entries.length) break;
+    entries.sort((a,b) => a.timestamp - b.timestamp);
+    let fresh = 0, newest = from;
+    for(const e of entries){
+      if(e.timestamp > upper) continue;
+      newest = Math.max(newest, e.timestamp);
+      if(seen.has(e.id)) continue;
+      seen.add(e.id); fresh++;
+      const txt = e.news || '';
+      const low = txt.toLowerCase();
+      const isXan = low.includes('xanax'), isRef = low.includes('refill');
+      if(!(isXan || isRef)) continue;
+      const idMatch = txt.match(/XID=(\d+)/);
+      if(!idMatch) continue;
+      const mid = idMatch[1];
+      const nameMatch = txt.match(/>([^<]+)<\/a>/);
+      const rec = usage[mid] || (usage[mid] = {xan:0, deposited:0, withdrawn:0, points:0, refills:0, name: nameMatch ? nameMatch[1] : ('#'+mid)});
+      const isWithdrawal = /to themselves from the faction arm/.test(low);
+      const isDeposit    = /deposited/.test(low);
+      const isDirectUse  = /used one of the faction'?s/.test(low);
+      const qm = low.match(/deposited\s+(\d+)\s*x/) || low.match(/gave\s+(\d+)\s*x/) || low.match(/used\s+(\d+)\b/) || low.match(/(\d+)\s*x\b/);
+      const q = qm ? parseInt(qm[1], 10) : 1;
+      if(isWithdrawal){ if(isXan) rec.withdrawn += q; continue; }
+      if(isDeposit){ if(isXan) rec.deposited += q; continue; }
+      if(!isDirectUse) continue;
+      if(isXan){ rec.xan += q; }
+      if(isRef){ rec.refills += q; rec.points += q*30; }
+    }
+    if(onProgress) onProgress(page+1, Object.keys(usage).length);
+    if(fresh === 0 || newest >= upper || newest <= from) break;
+    from = newest;
+  }
+  return usage;
+}
+
+async function fetchDonatorStatus(ids, onProgress){
+  let done = 0, denied = false;
+  for(const id of ids){
+    if(id in S.donators){ done++; continue; }
+    if(denied){ S.donators[id] = false; done++; continue; }
+    try{
+      const d = await apiCall(`user/${id}`, 'profile');
+      const icons = d.icons || {};
+      S.donators[id] = Object.values(icons).some(v => /donator|subscriber/i.test(String(v)));
+    }catch(e){
+      S.donators[id] = false;
+      if(e.code === 16 || e.code === 7) denied = true;
+    }
+    done++;
+    if(onProgress) onProgress(done, ids.length);
+  }
+  return S.donators;
+}
+function outcomeFor(targetId, a){
+  const m = S.outcomes;
+  for(let t = a.timestamp_started; t <= (a.timestamp_ended || a.timestamp_started) + 2; t++){
+    const hit = m[`${targetId}_${t}`];
+    if(hit) return hit;
+  }
+  return null;
+}
+
+const WIN = ['Attacked','Hospitalized','Mugged','Left','Leave','Arrested','Special','Looted'];
+const LOSS = ['Lost','Stalemate','Timeout','Escape','Interrupted'];
+function categorize(a, mine, enemy, warOnly){
+  const isAtk = String(a.attacker_faction) === String(mine);
+  const isDef = String(a.defender_faction) === String(mine);
+  if(warOnly){
+
+    if(enemy){
+      const opp = isAtk ? a.defender_faction : a.attacker_faction;
+      if(String(opp) !== String(enemy)) return null;
+    }else if(a.ranked_war !== undefined && a.ranked_war !== null){
+      if(!a.ranked_war) return null;
+    }
+  }
+  if(isAtk){
+    if(a.result === 'Assist') return 'assist';
+    if(WIN.includes(a.result)) return 'hit';
+    if(LOSS.includes(a.result)) return 'loss';
+    return 'other';
+  }
+  if(isDef){
+    if(WIN.includes(a.result)) return 'defend_lost';
+    if(LOSS.includes(a.result)) return 'defend_won';
+    return 'other';
+  }
+  return null;
+}
+const ff = a => (a.modifiers && a.modifiers.fair_fight) || null;
+const resp = a => a.respect_gain || a.respect || 0;
+
+function build(){
+  const mine = $('myFaction').value.trim();
+  const enemy = $('enemyFaction').value.trim();
+  const warOnly = $('warOnly').checked;
+  const ownId = S.ownId;
+
+  const blank = (id, name) => ({id, name: name || ('#'+id), hits:0, hosp:0, mug:0, leave:0,
+                                assists:0, losses:0, taken:0, respect:0, ffSum:0, ffN:0, last:0});
+  const byMember = {};
+
+  const warStartTs = toEpoch($('warStart').value);
+  const wasInFaction = m => {
+    if(!warStartTs) return true;
+    if(m.days_in_faction == null || isNaN(+m.days_in_faction)) return false;
+    return (now() - (+m.days_in_faction)*86400) <= warStartTs;
+  };
+  for(const [id, m] of Object.entries(S.roster || {})) if(wasInFaction(m)) byMember[id] = blank(id, m.name);
+  for(const a of S.attacks){
+    const cat = categorize(a, mine, enemy, warOnly);
+    if(!cat || cat === 'other' || cat === 'defend_won') continue;
+    const isAtk = String(a.attacker_faction) === String(mine);
+    const id = isAtk ? a.attacker_id : a.defender_id;
+    const nm = isAtk ? a.attacker_name : a.defender_name;
+    const m = byMember[id] || (byMember[id] = blank(id, nm));
+    if(cat === 'hit'){
+      m.hits++; m.respect += resp(a);
+      const f = ff(a); if(f){ m.ffSum += f; m.ffN++; }
+      m.last = Math.max(m.last, a.timestamp_started);
+      if(ownId && String(id) === String(ownId)){
+        const o = outcomeFor(a.defender_id, a);
+        if(o === 'hospitalize') m.hosp++;
+        if(o === 'mug') m.mug++;
+        if(o === 'leave') m.leave++;
+      }
+    }
+    if(cat === 'assist'){ m.assists++; m.last = Math.max(m.last, a.timestamp_started); }
+    if(cat === 'loss') m.losses++;
+    if(cat === 'defend_lost') m.taken++;
+  }
+
+  for(const [id, r] of Object.entries(S.armoury || {})){
+    if(!byMember[id]) byMember[id] = blank(id, r.name);
+  }
+  S.members = Object.values(byMember).map(m => ({...m, ff: m.ffN ? m.ffSum/m.ffN : 0}));
+
+  const rows = [];
+  for(const a of (S.personal.length ? S.personal : S.attacks)){
+    if(ownId && String(a.attacker_id) !== String(ownId) && String(a.defender_id) !== String(ownId)) continue;
+    const cat = categorize(a, mine, enemy, warOnly);
+    if(!cat || cat === 'other' || cat === 'defend_won') continue;
+    const isAtk = String(a.attacker_faction) === String(mine);
+    const targetId = isAtk ? a.defender_id : a.attacker_id;
+    rows.push({
+      ts: a.timestamp_started, targetId,
+      target: isAtk ? a.defender_name : a.attacker_name,
+      targetFaction: (isAtk ? a.defender_factionname : a.attacker_factionname) || '—',
+      cat, outcome: cat === 'hit' ? outcomeFor(targetId, a) : null,
+      result: a.result, respect: resp(a), ff: ff(a)
+    });
+  }
+  rows.sort((x,y) => y.ts - x.ts);
+  S.feedRows = rows;
+}
+
+function renderAll(){ renderOverview(); renderRoster(); renderFeed(); }
+
+function renderOverview(){
+  const src = S.members;
+  const tot = src.reduce((t,m) => ({
+    hits:t.hits+m.hits, assists:t.assists+m.assists, losses:t.losses+m.losses,
+    taken:t.taken+m.taken, respect:t.respect+m.respect
+  }), {hits:0,assists:0,losses:0,taken:0,respect:0});
+  const active = src.filter(m => m.hits || m.assists).length;
+  $('statMembers').textContent = active;
+  $('statHits').textContent = tot.hits;
+  $('statAssists').textContent = tot.assists;
+  $('statLosses').textContent = tot.losses;
+  $('statTaken').textContent = tot.taken;
+  $('statRespect').textContent = tot.respect.toFixed(0);
+
+  const stamps = [];
+  for(const a of S.attacks){
+    const cat = categorize(a, $('myFaction').value.trim(), $('enemyFaction').value.trim(), $('warOnly').checked);
+    if(cat === 'hit') stamps.push(a.timestamp_started);
+  }
+  const start = toEpoch($('warStart').value) || (stamps.length ? Math.min(...stamps) : now());
+  const hrs = Math.max((now() - start)/3600, 0.1);
+  $('statRate').textContent = (tot.hits/hrs).toFixed(1);
+  $('statRecent').textContent = stamps.filter(t => t > now()-900).length;
+
+  const buckets = new Array(24).fill(0);
+  const base = now() - 24*600;
+  for(const t of stamps){
+    const i = Math.floor((t - base)/600);
+    if(i >= 0 && i < 24) buckets[i]++;
+  }
+  const peak = Math.max(1, ...buckets);
+  $('spark').innerHTML = buckets.map(v =>
+    `<div class="${v?'':'quiet'}" style="height:${Math.max(2,(v/peak)*100)}%" title="${v} hits"></div>`).join('');
+  $('sparkFrom').textContent = fmtTime(base);
+  $('sparkPanel').style.display = stamps.length ? 'block' : 'none';
+
+  if(S.war && S.war.us){
+    const us = Number(S.war.us.score||0), them = Number(S.war.them.score||0), target = Number(S.war.target||0);
+    $('usName').textContent = S.war.us.name || 'Us';
+    $('themName').textContent = S.war.them.name || 'Them';
+    $('usScore').textContent = us.toLocaleString();
+    $('themScore').textContent = them.toLocaleString();
+    const span = Math.max(target * 1.05, us, them, 1);
+    $('fillUs').style.width = (us/span*50) + '%';
+    $('fillThem').style.width = (them/span*50) + '%';
+    if(target){
+      $('targetMark').style.display = 'block';
+      $('targetMark').style.left = (target/span*50) + '%';
+      $('targetLab').style.display = 'block';
+      $('targetLab').style.left = (target/span*50) + '%';
+      $('targetLab').textContent = 'target ' + target.toLocaleString();
+      $('targetVal').textContent = target.toLocaleString();
+    }
+    const lead = us - them;
+    const le = $('leadVal');
+    le.textContent = (lead>0?'+':'') + lead.toLocaleString();
+    le.style.color = lead > 0 ? 'var(--win)' : lead < 0 ? 'var(--loss)' : 'var(--text)';
+    const ptsPerHr = us / Math.max((now()-S.war.start)/3600, 0.1);
+    $('rateVal').textContent = ptsPerHr.toFixed(0);
+    const remain = target ? Math.max(target-us,0) : 0;
+    $('etaVal').textContent = !target ? '—' : remain === 0 ? 'target reached' : ptsPerHr > 0 ? dur(remain/ptsPerHr*3600) : '—';
+    $('scorePanel').style.display = 'block';
+  }
+  const any = S.attacks.length || S.personal.length;
+  $('statsGrid').style.display = any ? 'grid' : 'none';
+  $('emptyOverview').style.display = any ? 'none' : 'block';
+}
+
+function renderRoster(){
+  const filter = $('rosterFilter').value.trim().toLowerCase();
+  let list = S.members.filter(m => !filter || m.name.toLowerCase().includes(filter));
+  if($('hideIdle').checked) list = list.filter(m => m.hits || m.assists);
+  const k = S.sortKey;
+  list.sort((a,b) => k === 'name'
+    ? -S.sortDir * a.name.localeCompare(b.name)
+    : -S.sortDir * ((b[k]||0) - (a[k]||0)));
+  const maxHits = Math.max(1, ...list.map(m => m.hits));
+  const t = now();
+  $('rosterBody').innerHTML = list.map((m,i) => {
+    const idle = m.last ? t - m.last : null;
+    const cls = idle == null ? '' : idle < 900 ? 'idle-ok' : idle < 3600 ? 'idle-warn' : 'idle-cold';
+    return `<tr>
+      <td class="rank">${i+1}</td>
+      <td class="name"><a class="plink" href="https://www.torn.com/profiles.php?XID=${m.id}" target="_blank" rel="noopener">${esc(m.name)}</a>${k==='hits'?`<div class="bar" style="width:${(m.hits/maxHits*100).toFixed(0)}%"></div>`:''}</td>
+      <td class="num">${m.hits}</td><td class="num">${m.hosp||'—'}</td><td class="num">${m.mug||'—'}</td>
+      <td class="num">${m.leave||'—'}</td><td class="num">${m.assists||'—'}</td><td class="num">${m.losses||'—'}</td>
+      <td class="num">${m.taken||'—'}</td><td class="num">${m.respect.toFixed(1)}</td>
+      <td class="num">${m.ff ? m.ff.toFixed(2) : '—'}</td>
+      <td class="num ${cls}">${idle == null ? '—' : dur(idle)}</td>
+    </tr>`;
+  }).join('');
+  $('rosterCount').textContent = `${list.length} members`;
+  $('emptyRoster').style.display = S.members.length ? 'none' : 'block';
+  $('rosterNote').textContent = S.caps.faction
+    ? 'Hits, assists, losses, hits taken and respect come from faction → attacks. Hosp / Mug / Leave can only be resolved for the key running this tool.'
+    : 'Faction-wide data needs a key with faction API access — this board is showing only what your own key can see.';
+  document.querySelectorAll('#rosterTable thead th').forEach(th =>
+    th.classList.toggle('sorted', th.dataset.key === S.sortKey));
+}
+
+function renderFeed(){
+  const label = {hit:'Hit', assist:'Assist', loss:'Loss', defend_lost:'Hit taken'};
+  const olabel = {hospitalize:'Hospitalize', mug:'Mug', leave:'Leave'};
+  const rows = S.feedRows;
+  $('feedBody').innerHTML = rows.slice(0,400).map(r => `<tr>
+    <td>${fmtTime(r.ts)}</td>
+    <td><a class="plink" href="https://www.torn.com/profiles.php?XID=${r.targetId}" target="_blank" rel="noopener">${esc(r.target || 'Unknown')}</a></td>
+    <td>${esc(r.targetFaction)}</td>
+    <td><span class="tag ${r.cat}">${r.outcome ? olabel[r.outcome] : label[r.cat]}</span></td>
+    <td class="num">${r.respect ? r.respect.toFixed(2) : '—'}</td>
+    <td class="num">${r.ff ? r.ff.toFixed(2) : '—'}</td>
+  </tr>`).join('') || '<tr><td colspan="6" class="empty">No hits in this window.</td></tr>';
+  $('feedCount').textContent = `${rows.length} entries${rows.length>400 ? ' (showing latest 400)' : ''}`;
+}
+
+async function loadTargets(){
+  const id = $('enemyFaction').value.trim();
+  if(!id){ setStatus('Set an enemy faction ID first.', 'err'); return; }
+  setStatus('Loading enemy roster...', '');
+  try{
+    const d = await apiCall(`faction/${id}`, 'basic');
+    S.targets = Object.entries(d.members || {}).map(([mid, m]) => ({
+      id: mid, name: m.name, level: m.level,
+      state: (m.status && m.status.state) || 'Unknown',
+      desc: (m.status && m.status.description) || '',
+      until: (m.status && m.status.until) || 0,
+      lastAction: (m.last_action && m.last_action.timestamp) || 0
+    }));
+    renderTargets();
+    setStatus(`Enemy roster loaded — ${S.targets.length} members.`, 'ok');
+  }catch(e){ setStatus(e.message, 'err'); }
+}
+function renderTargets(){
+  const f = $('targetFilter').value.trim().toLowerCase();
+  const t = now();
+  let list = S.targets.filter(x => !f || x.name.toLowerCase().includes(f));
+  if($('onlyAttackable').checked) list = list.filter(x => x.state === 'Okay');
+  const k = S.tSortKey;
+  list.sort((a,b) => {
+    if(k === 'name') return S.tSortDir * a.name.localeCompare(b.name);
+    if(k === 'until'){
+      const av = a.state === 'Okay' ? 0 : (a.until || Infinity);
+      const bv = b.state === 'Okay' ? 0 : (b.until || Infinity);
+      return S.tSortDir * (av - bv);
+    }
+    return S.tSortDir * ((a[k]||0) - (b[k]||0));
+  });
+  $('targetBody').innerHTML = list.map(x => {
+    const cls = x.state === 'Okay' ? 'okay' : x.state === 'Hospital' ? 'hospital' : 'travel';
+    const left = x.until && x.until > t ? ` ${dur(x.until - t)}` : '';
+    return `<tr>
+      <td><a class="plink" href="https://www.torn.com/profiles.php?XID=${x.id}" target="_blank" rel="noopener">${esc(x.name)}</a></td>
+      <td class="num">${x.level}</td>
+      <td><span class="tag ${cls}">${esc(x.state)}${left}</span></td>
+      <td class="num">${x.lastAction ? dur(t - x.lastAction) : '—'}</td>
+      <td><a class="plink" href="https://www.torn.com/loader.php?sid=attack&user2ID=${x.id}" target="_blank" rel="noopener">Attack</a></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="empty">Nobody matches that filter.</td></tr>';
+  $('targetCount').textContent = `${list.length} shown of ${S.targets.length}`;
+  $('emptyTargets').style.display = S.targets.length ? 'none' : 'block';
+  document.querySelectorAll('#targetTable thead th').forEach(th =>
+    th.classList.toggle('sorted', th.dataset.tkey === S.tSortKey));
+}
+
+async function doFetch(incremental){
+  const btn = $('fetchBtn');
+  btn.disabled = true;
+  try{
+    if(!S.caps.level && !S.caps.personal && !S.caps.faction){
+      setStatus('Checking what this key can reach...', '');
+      await detectCaps();
+    }
+    if(!$('myFaction').value.trim() && S.caps.personal) await detectMyFaction();
+    if(!S.ownId && S.caps.personal){
+      try{ const p = await apiCall('user','profile'); S.ownId = p.player_id; }catch(e){}
+    }
+    const warStart = toEpoch($('warStart').value) || now() - 86400;
+    const from = incremental && S.lastFetchTo ? S.lastFetchTo - 300 : warStart;
+
+    const warEnd = toEpoch($('warEnd').value) || (S.war && S.war.end) || now();
+    const to = Math.min(warEnd, now());
+
+    const lookbackDays = Math.max(0, parseFloat($('armouryLookback').value) || 3);
+    const armouryFrom = incremental && S.lastFetchTo ? from : Math.floor(warStart - lookbackDays*86400);
+
+    if(S.caps.faction){
+      setStatus('Pulling faction attack log...', '');
+      const fresh = await pageAttacks('faction', from, to,
+        (p, n) => setStatus(`Faction log — page ${p}, ${n} records...`, ''));
+      S.attacks = incremental ? mergeAttacks(S.attacks, fresh) : fresh;
+      try{ const rd = await apiCall('faction','basic'); if(rd.members) S.roster = rd.members; }catch(e){}
+      try{
+        setStatus('Reading faction armoury news for Xanax & refills...', '');
+        const u = await fetchArmouryUsage(armouryFrom, to, (p, n) => setStatus(`Armoury news — page ${p}, ${n} members...`, ''));
+        S.armoury = incremental ? mergeArmoury(S.armoury, u) : u;
+        const refillers = Object.entries(S.armoury).filter(([,r]) => (r.refills||0) > 0).map(([id]) => id);
+        if(refillers.length){
+          setStatus(`Checking donator status for ${refillers.length} refill users...`, '');
+          await fetchDonatorStatus(refillers, (d, t) => setStatus(`Donator check — ${d}/${t}...`, ''));
+        }
+      }catch(e){ }
+    }
+    if(S.caps.personal){
+      try{
+        setStatus('Pulling your own attack log...', '');
+        const fresh = await pageAttacks('user', from, to,
+          (p, n) => setStatus(`Your log — page ${p}, ${n} records...`, ''));
+        S.personal = incremental ? mergeAttacks(S.personal, fresh) : fresh;
+        if(!S.caps.faction) S.attacks = S.personal;
+        setStatus('Matching hit outcomes against your event log...', '');
+        S.logDenied = false;
+        const o = await fetchOutcomes(from, to);
+        S.outcomes = incremental ? {...S.outcomes, ...o} : o;
+      }catch(e){
+
+        if(e.code === 16) S.logDenied = true;
+      }
+    }
+    S.lastFetchTo = now();
+    await refreshWarScore();
+    build();
+    renderAll();
+    if(S.caps.faction && !S.targets.length && $('enemyFaction').value.trim()) loadTargets();
+    $('warStatus').textContent = 'Live · ' + fmtTime(S.lastFetchTo);
+    $('warStatus').classList.add('live');
+    const n = S.attacks.length;
+    const note = S.logDenied
+      ? ' Hosp/Mug/Leave need a full-access key (your own event log) — everything else is from the faction log.'
+      : '';
+    let armNote = '';
+    if(S.caps.faction){
+      const recs = Object.values(S.armoury);
+      const totXan = recs.reduce((t,r) => t + (r.xan||0), 0);
+      const totRef = recs.reduce((t,r) => t + (r.refills||0), 0);
+      const users = recs.filter(r => (r.xan||0) || (r.refills||0)).length;
+      armNote = ` Armoury: ${totXan} Xanax, ${totRef} refills across ${users} members.`;
+    }
+    setStatus(`Loaded ${n} records, ${S.members.length} members. ${budget()} API calls in the last minute.${note}${armNote}`, 'ok');
+    persist();
+  }catch(e){
+    setStatus(e.message, 'err');
+  }finally{
+    btn.disabled = false;
+  }
+}
+function mergeAttacks(oldList, fresh){
+  const seen = new Set(oldList.map(a => a.id));
+  return oldList.concat(fresh.filter(a => !seen.has(a.id)));
+}
+function mergeArmoury(oldMap, fresh){
+
+  const out = {...oldMap};
+  for(const [id, r] of Object.entries(fresh)){
+    const p = out[id] || {xan:0, deposited:0, withdrawn:0, points:0, refills:0, name:r.name};
+    out[id] = {name: r.name || p.name,
+               xan: Math.max(p.xan||0, r.xan||0),
+               deposited: Math.max(p.deposited||0, r.deposited||0),
+               withdrawn: Math.max(p.withdrawn||0, r.withdrawn||0),
+               points: Math.max(p.points||0, r.points||0),
+               refills: Math.max(p.refills||0, r.refills||0)};
+  }
+  return out;
+}
+
+function download(name, blob){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function csv(rows, header){
+  const body = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  return header.join(',') + '\n' + body;
+}
+function exportRosterCsv(){
+  if(!S.members.length) return setStatus('Nothing to export yet.', 'err');
+  const rows = [...S.members].sort((a,b)=>b.hits-a.hits).map((m,i) =>
+    [i+1,m.name,m.hits,m.hosp,m.mug,m.leave,m.assists,m.losses,m.taken,m.respect.toFixed(2),m.ff?m.ff.toFixed(2):'',m.last?fmtTime(m.last):'']);
+  download(`hitfeed_leaderboard_${new Date().toISOString().slice(0,10)}.csv`,
+    new Blob([csv(rows, ['#','Member','Hits','Hosp','Mug','Leave','Assists','Losses','Taken','Respect','AvgFF','LastHit'])], {type:'text/csv'}));
+}
+function exportRosterXlsx(){
+  if(typeof XLSX === 'undefined') return setStatus('Excel export needs the SheetJS library, which did not load. CSV still works.', 'err');
+  if(!S.members.length) return setStatus('Nothing to export yet.', 'err');
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([...S.members].sort((a,b)=>b.hits-a.hits).map((m,i)=>({
+    Rank:i+1, Member:m.name, Hits:m.hits, Hosp:m.hosp, Mug:m.mug, Leave:m.leave,
+    Assists:m.assists, Losses:m.losses, Taken:m.taken, Respect:+m.respect.toFixed(2),
+    AvgFF:m.ff?+m.ff.toFixed(2):'', LastHit:m.last?fmtTime(m.last):''
+  }))), 'Leaderboard');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(S.feedRows.map(r=>({
+    Time:fmtTime(r.ts), Target:r.target, Faction:r.targetFaction, Category:r.cat,
+    Outcome:r.outcome||'', Result:r.result, Respect:r.respect, FF:r.ff||''
+  }))), 'Your hits');
+  XLSX.writeFile(wb, `hitfeed_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+function exportFeedCsv(){
+  if(!S.feedRows.length) return setStatus('Nothing to export yet.', 'err');
+  download(`hitfeed_myhits_${new Date().toISOString().slice(0,10)}.csv`,
+    new Blob([csv(S.feedRows.map(r => [fmtTime(r.ts), r.target, r.targetFaction, r.cat, r.outcome||'', r.result, r.respect, r.ff||'']),
+      ['Time','Target','Faction','Category','Outcome','Result','Respect','FF'])], {type:'text/csv'}));
+}
+
+const XAN_PRICE = 850000, POINT_PRICE = 33100;
+function col(n){ let s=''; n++; while(n){ n--; s=String.fromCharCode(65+n%26)+s; n=Math.floor(n/26);} return s; }
+function generateWarReport(){
+  if(!S.caps.faction){
+    setStatus('The War Report needs a faction-access key — this is leadership only.', 'err');
+    return;
+  }
+  if(!S.members.length){ setStatus('Fetch the war first, then generate the report.', 'err'); return; }
+  if(typeof XLSX === 'undefined'){ setStatus('The spreadsheet library did not load, so the report cannot be built.', 'err'); return; }
+
+  const members = [...S.members].sort((a,b) => b.hits - a.hits);
+  const ws = {};
+  const set = (c, o) => { ws[c] = o; };
+  const num = (v, z) => ({t:'n', v, z: z||'#,##0'});
+  const str = v => ({t:'s', v});
+  const f = (formula, z, v) => ({t:'n', f: formula, z: z||'#,##0', v: v == null ? 0 : v});
+  const YELLOW = {fill:{patternType:'solid', fgColor:{rgb:'FFF2CC'}}};
+  const ynum = (v, z) => ({t:'n', v, z: z||'#,##0', s: YELLOW});
+  const PPP = 0, XP = XAN_PRICE, PP = POINT_PRICE, EPHv = 25, EPRDv = 150, EPRRv = 100;
+
+  const headers = ['Member Pay','Member','Total Shares','Xan Taken','Xan Returned','Rep Gained','War Hits',
+                   'Assists','Points Used','E Created','E Used','Difference','Losses','Hits Taken'];
+  headers.forEach((h,i) => set(col(i)+'1', str(h)));
+  set('Q1', str('Member Cut')); set('R1', str('Pay Per Point'));
+
+  const first = 2, last = 1 + members.length;
+  const priceRow = last + 5;
+  const EPH = `$B$${priceRow+2}`;
+  const EPRD = `$B$${priceRow+3}`, EPRR = `$B$${priceRow+4}`;
+  const sum = {}; for(let c=3;c<=14;c++) sum[c]=0;
+  members.forEach((m, i) => {
+    const r = first + i;
+    const arm = S.armoury[m.id] || {xan:0, deposited:0, points:0, refills:0};
+    const refills = arm.refills || Math.round((arm.points||0)/30);
+    const isDonator = !!S.donators[m.id];
+    const hits = m.hits||0, assists = m.assists||0, losses = m.losses||0, taken = m.taken||0;
+    const xan = arm.xan||0, returned = arm.deposited||0, points = arm.points || refills*30, rep = +m.respect.toFixed(2);
+    const shares = hits*2 + assists;
+    const eCreated = refills * (isDonator ? EPRDv : EPRRv);
+    const eUsed = (hits + assists + losses) * EPHv;
+    set(`A${r}`, f(`C${r}*$R$2`, '#,##0', shares*PPP));
+    set(`B${r}`, str(m.name));
+    set(`C${r}`, f(`G${r}*2+H${r}`, '#,##0', shares));
+    set(`D${r}`, num(xan));
+    set(`E${r}`, num(returned));
+    set(`F${r}`, num(rep, '#,##0.00'));
+    set(`G${r}`, num(hits));
+    set(`H${r}`, num(assists));
+    set(`I${r}`, num(points));
+    set(`J${r}`, f(`${refills}*${isDonator ? EPRD : EPRR}`, '#,##0', eCreated));
+    set(`K${r}`, f(`(G${r}+H${r}+M${r})*${EPH}`, '#,##0', eUsed));
+    set(`L${r}`, f(`K${r}-J${r}`, '#,##0', eUsed - eCreated));
+    set(`M${r}`, num(losses));
+    set(`N${r}`, num(taken));
+    sum[3]+=shares; sum[4]+=xan; sum[5]+=returned; sum[6]+=rep; sum[7]+=hits; sum[8]+=assists;
+    sum[9]+=points; sum[10]+=eCreated; sum[11]+=eUsed; sum[12]+=(eUsed-eCreated); sum[13]+=losses; sum[14]+=taken;
+  });
+
+  const tr = last + 1;
+  set(`A${tr}`, str('Total'));
+  for(let ci=2;ci<=13;ci++){ const L=col(ci); set(`${L}${tr}`, f(`SUM(${L}${first}:${L}${last})`, ci===5?'#,##0.00':'#,##0', sum[ci+1])); }
+
+  const cr = tr + 1;
+  const xanCost = sum[4]*XP, pointCost = sum[9]*PP, factionCost = xanCost + pointCost;
+  set(`A${cr}`, str('Cost'));
+  set(`D${cr}`, f(`D${tr}*$B${cr+3}`, '#,##0', xanCost));
+  set(`I${cr}`, f(`I${tr}*$B${cr+4}`, '#,##0', pointCost));
+
+  const pr = cr + 3;
+  set(`A${pr}`, str('Xanax price'));   set(`B${pr}`, ynum(XAN_PRICE));
+  set(`A${pr+1}`, str('Point price')); set(`B${pr+1}`, ynum(POINT_PRICE));
+  set(`A${pr+2}`, str('Energy per hit')); set(`B${pr+2}`, num(25));
+  set(`A${pr+3}`, str('E per refill (donator)')); set(`B${pr+3}`, num(150));
+  set(`A${pr+4}`, str('E per refill (regular)')); set(`B${pr+4}`, num(100));
+
+  const av = pr + 5;
+  const n = members.length || 1;
+  set(`A${av}`, str('Avg. Rep Per Hit'));
+  set(`C${av}`, f(`IFERROR(F${tr}/G${tr},0)`, '#,##0.00', sum[7] ? sum[6]/sum[7] : 0));
+  set(`A${av+1}`, str('Avg. Per Member'));
+  for(let ci=2;ci<=13;ci++){ const L=col(ci); set(`${L}${av+1}`, f(`IFERROR(AVERAGE(${L}${first}:${L}${last}),0)`, '#,##0.00', sum[ci+1]/n)); }
+
+  set('O2', str('Cache Profit'));      set('P2', ynum(0));
+  set('O3', str('Faction Cost'));      set('P3', f(`D${cr}+I${cr}`, '#,##0', factionCost));
+  set('O4', str('Faction Cut (%)'));   set('P4', {t:'n', v:0.20, z:'0.0%', s:YELLOW});
+  set('O5', str('Cut Applied'));       set('P5', f('P4*P2', '#,##0', 0));
+  set('O6', str('Total'));             set('P6', f('P3+P5', '#,##0', factionCost));
+  set('Q2', f('P2-P6', '#,##0', -factionCost));
+  set('R2', f(`IFERROR(Q2/C${tr},0)`, '#,##0', 0));
+
+  const lg = av + 4;
+  set(`A${lg}`, str('Legend'));
+  set(`A${lg+1}`, str('Auto-filled (no need to edit): Member, Rep, Hits, Assists, Losses, Hits Taken, Xan Taken, Xan Returned, Points Used.'));
+  set(`A${lg+2}`, str('Calculated: Shares = Hits x2 + Assists; Member Pay = Shares x Pay Per Point; E Used = (Hits+Assists+Losses) x E/hit; E Created = refills x E/refill; Faction Cost = Xan + Point cost.'));
+  set(`A${lg+3}`, str('Fill in the yellow cells: Cache Profit and Faction Cut (%) (defaults 20%). Pay Per Point is calculated = Member Cut / Total Shares.'));
+
+  ws['!ref'] = `A1:R${lg+3}`;
+  ws['!cols'] = [13,16,11,10,11,11,9,9,11,10,10,10,8,10,15,15,15,14].map(w => ({wch:w}));
+
+  const armCount = Object.keys(S.armoury).length;
+  const donCount = Object.values(S.donators).filter(Boolean).length;
+  const filled = `Xan & points auto-filled for ${armCount} members, ${donCount} donators detected. Fill in Cache Profit, Pay Per Point, and one Faction Cut cell.`;
+  const tabName = enemyTabName();
+
+  if(S.masterWb){
+
+    const wb = S.masterWb;
+    if(wb.Sheets[tabName]){
+      delete wb.Sheets[tabName];
+      wb.SheetNames = wb.SheetNames.filter(n => n !== tabName);
+    }
+    const blankIdx = wb.SheetNames.findIndex(n => /blank/i.test(n));
+    const insertAt = blankIdx >= 0 ? blankIdx + 1 : 0;
+    wb.Sheets[tabName] = ws;
+    wb.SheetNames.splice(insertAt, 0, tabName);
+    XLSX.writeFile(wb, S.masterName || `war_reports_${new Date().toISOString().slice(0,10)}.xlsx`);
+    setStatus(`Added "${tabName}" as tab ${insertAt + 1} of ${wb.SheetNames.length} and saved the full ledger. ${filled}`, 'ok');
+  }else{
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, tabName);
+    XLSX.writeFile(wb, `war_report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    setStatus(`War Report built — ${filled} Tip: upload your master war-report doc first to append this to it instead.`, 'ok');
+  }
+}
+
+function enemyTabName(){
+  let name = (S.war && S.war.them && S.war.them.name) || '';
+  if(!name){
+    const id = $('enemyFaction').value.trim();
+    name = id ? 'vs ' + id : 'War';
+  }
+
+  const dateTs = (S.war && (S.war.end || S.war.start))
+    || toEpoch($('warEnd').value) || toEpoch($('warStart').value) || now();
+  const date = new Date(dateTs*1000).toISOString().slice(0,10);
+  name = name.replace(/[:\\/?*\[\]]/g, '').trim();
+  const room = 31 - (date.length + 1);
+  return `${name.slice(0, room)} ${date}`;
+}
+
+function loadMasterDoc(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      S.masterWb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellNF:true, cellFormula:true, cellStyles:true});
+      S.masterName = file.name;
+      const tabs = S.masterWb.SheetNames;
+      $('masterInfo').textContent = `Loaded ${file.name} — ${tabs.length} tab${tabs.length===1?'':'s'}: ${tabs.slice(0,6).join(', ')}${tabs.length>6?'…':''}. New reports will slot in after the Blank tab.`;
+      $('clearMaster').style.display = 'inline-block';
+    }catch(err){
+      $('masterInfo').textContent = 'Could not read that file as a workbook: ' + err.message;
+      S.masterWb = null;
+    }
+  };
+  reader.onerror = () => { $('masterInfo').textContent = 'Could not read that file.'; };
+  reader.readAsArrayBuffer(file);
+}
+
+function persist(msg){
+  const s = {
+    myFaction:$('myFaction').value.trim(), enemyFaction:$('enemyFaction').value.trim(),
+    warStart:$('warStart').value, warEnd:$('warEnd').value, armouryLookback:$('armouryLookback').value,
+    warOnly:$('warOnly').checked, tct:$('tct').checked,
+    saveKey:$('saveKey').checked, apiKey: $('saveKey').checked ? $('apiKey').value.trim() : ''
+  };
+  try{
+    localStorage.setItem('hitfeed', JSON.stringify(s));
+    if(!$('saveKey').checked) sessionStorage.setItem('hitfeedKey', $('apiKey').value.trim());
+    if(msg) setStatus('Setup saved on this device.', 'ok');
+  }catch(e){ if(msg) setStatus('Could not save: ' + e.message, 'err'); }
+}
+function restore(){
+  try{
+    const s = JSON.parse(localStorage.getItem('hitfeed') || '{}');
+    $('myFaction').value = s.myFaction || '';
+    $('enemyFaction').value = s.enemyFaction || '';
+    $('warStart').value = s.warStart || '';
+    $('warEnd').value = s.warEnd || '';
+    $('armouryLookback').value = s.armouryLookback || '';
+    if(s.warOnly !== undefined) $('warOnly').checked = s.warOnly;
+    if(s.tct !== undefined) $('tct').checked = s.tct;
+    $('saveKey').checked = !!s.saveKey;
+    $('apiKey').value = s.apiKey || sessionStorage.getItem('hitfeedKey') || '';
+  }catch(e){}
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.view));
+  if(b.dataset.view === 'targets' && !S.targets.length && $('enemyFaction').value.trim()) loadTargets();
+}));
+document.querySelectorAll('#rosterTable thead th.sortable').forEach(th => th.addEventListener('click', () => {
+  const k = th.dataset.key;
+  S.sortDir = (S.sortKey === k) ? -S.sortDir : -1;
+  S.sortKey = k;
+  renderRoster();
+}));
+document.querySelectorAll('#targetTable thead th.sortable').forEach(th => th.addEventListener('click', () => {
+  const k = th.dataset.tkey;
+  S.tSortDir = (S.tSortKey === k) ? -S.tSortDir : 1;
+  S.tSortKey = k;
+  renderTargets();
+}));
+$('fetchBtn').addEventListener('click', () => doFetch(false));
+$('saveBtn').addEventListener('click', () => persist(true));
+$('detectBtn').addEventListener('click', async () => {
+  try{ setStatus('Looking for an active ranked war...', ''); await findWar('active'); renderOverview(); setStatus('War found. Press Fetch hits to pull the log.', 'ok'); }
+  catch(e){ setStatus(e.message, 'err'); }
+});
+$('lastWarBtn').addEventListener('click', async () => {
+  try{ setStatus('Loading your last finished war...', ''); await findWar('last'); renderOverview(); setStatus('Last war loaded. Press Fetch hits to pull the log.', 'ok'); }
+  catch(e){ setStatus(e.message, 'err'); }
+});
+$('refreshTargets').addEventListener('click', loadTargets);
+$('exportRosterCsv').addEventListener('click', exportRosterCsv);
+$('exportRosterXlsx').addEventListener('click', exportRosterXlsx);
+$('exportFeedCsv').addEventListener('click', exportFeedCsv);
+$('exportWarReport').addEventListener('click', generateWarReport);
+$('masterFile').addEventListener('change', e => { if(e.target.files[0]) loadMasterDoc(e.target.files[0]); });
+$('clearMaster').addEventListener('click', () => {
+  S.masterWb = null; S.masterName = null;
+  $('masterFile').value = '';
+  $('clearMaster').style.display = 'none';
+  $('masterInfo').textContent = 'Cleared — the next report will download as its own standalone file.';
+});
+$('rosterFilter').addEventListener('input', renderRoster);
+$('hideIdle').addEventListener('change', renderRoster);
+$('targetFilter').addEventListener('input', renderTargets);
+$('onlyAttackable').addEventListener('change', renderTargets);
+$('warOnly').addEventListener('change', () => { build(); renderAll(); });
+$('tct').addEventListener('change', () => { renderAll(); renderTargets(); });
+$('autoRefresh').addEventListener('change', () => {
+  clearInterval(refreshTimer);
+  if($('autoRefresh').checked){
+    refreshTimer = setInterval(() => doFetch(true), 60000);
+    setStatus('Auto-refresh on — topping up every 60 seconds.', 'ok');
+  }
+});
+$('apiKey').addEventListener('change', () => { S.caps = {faction:false, personal:false, level:null}; S.ownId = null; });
+
+tickTimer = setInterval(() => { if(S.targets.length && $('view-targets').classList.contains('on')) renderTargets(); }, 15000);
+
+restore();
+</script>
+</body>
+</html>
