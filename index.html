@@ -2,164 +2,501 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TORN COMMAND — Tools</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07080b">
+<meta name="description" content="Torn Command — browser-based ranked war and chain tools for Torn factions. Nothing installs, and your API key never leaves your browser.">
+<title>Torn Command — War &amp; chain tools for Torn</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fbbf24'/%3E%3Cstop offset='1' stop-color='%23818cf8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='24' height='24' rx='6' fill='url(%23g)'/%3E%3Cg fill='none' stroke='%230b0c10' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 4.5l6.5 3.7v7.6L12 19.5l-6.5-3.7V8.2z'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ── Torn Command design system (shared by every page in the suite) ── */
   :root{
-    --bg:#0a0b0f; --bg-2:#0e1016; --panel:#13151c; --panel-2:#181b24;
-    --border:#22252f; --border-soft:#1a1c25;
-    --text:#eceef2; --text-dim:#8b8fa3; --text-faint:#5a5e6e;
-    --accent:#f0b429; --accent-soft:#f0b4291a; --accent-bright:#ffce5a;
-    --win:#3ecf8e; --energy:#6c7dfa;
+    color-scheme:dark;
+    --bg:#07080b; --bg-2:#0b0d12;
+    --panel:#0f1117; --panel-2:#141720; --panel-3:#1b1f2a;
+    --border:#222632; --border-soft:#181b24; --border-strong:#2d3240;
+    --text:#eef0f5; --text-dim:#9ba1b3; --text-faint:#646a7b;
+    --win:#34d399; --loss:#f87171; --amber:#fbbf24; --neutral:#8b91a3;
+    --enemy:#f87171; --hosp:#38bdf8; --energy:#818cf8; --xan:#c084fc; --point:#38bdf8;
+    --radius:14px; --radius-sm:9px;
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --shadow:0 1px 0 rgba(255,255,255,.035) inset, 0 16px 40px -24px rgba(0,0,0,.8);
   }
   *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
   body{
     margin:0; background:var(--bg); color:var(--text);
-    font-family:'Inter', -apple-system, sans-serif;
-    min-height:100vh; padding:48px 20px;
+    font:14px/1.5 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings:'cv11','ss01';
+    -webkit-font-smoothing:antialiased; min-height:100vh;
   }
-  ::selection{background:var(--accent); color:#000;}
-  .wrap{max-width:820px; margin:0 auto;}
-
-  .brand{display:flex; align-items:center; gap:14px; margin-bottom:8px;}
-  .mark{
-    width:42px; height:42px; border-radius:11px;
-    background:linear-gradient(140deg, var(--accent), #c78f14);
-    display:flex; align-items:center; justify-content:center;
-    font-weight:700; font-size:19px; color:#000; flex-shrink:0;
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 0%, #000 20%, transparent 75%);
+            mask-image:radial-gradient(ellipse 70% 55% at 50% 0%, #000 20%, transparent 75%);
   }
-  h1{font-size:26px; font-weight:700; margin:0; letter-spacing:-0.5px;}
-  .sub{color:var(--text-dim); font-size:14px; margin:0 0 34px 56px;}
-
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px;}
-
-  a.card{
-    display:block; text-decoration:none; color:inherit;
-    background:var(--panel); border:1px solid var(--border);
-    border-radius:14px; padding:22px;
-    transition:border-color .15s, background .15s, transform .15s;
+  body::after{
+    content:""; position:fixed; left:50%; top:-260px; width:1100px; height:520px; transform:translateX(-50%);
+    z-index:-1; pointer-events:none;
+    background:radial-gradient(closest-side, var(--accent-glow), transparent);
   }
-  a.card:hover{border-color:#f0b42955; background:var(--panel-2); transform:translateY(-2px);}
+  ::selection{background:var(--accent); color:var(--accent-ink);}
+  a{color:inherit;}
+  svg.i{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none;}
 
-  .card-top{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
-  .card h2{font-size:17px; font-weight:700; margin:0; letter-spacing:0.5px;}
-  .badge{
-    font-size:11px; font-weight:600; padding:4px 9px; border-radius:20px;
-    background:var(--accent-soft); border:1px solid #f0b42940; color:var(--accent-bright);
-  }
-  .badge.live{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
-  .card p{color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 14px;}
-  .go{
-    font-family:'JetBrains Mono', monospace; font-size:12px;
-    font-weight:600; color:var(--accent);
-  }
-
-  .badge.script{color:var(--energy); border-color:#6c7dfa40; background:#6c7dfa14;}
-
-  .section-head{
-    display:flex; align-items:baseline; justify-content:space-between;
-    margin:34px 0 14px; padding-bottom:9px;
+  /* suite bar */
+  .suitebar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(7,8,11,.78); backdrop-filter:saturate(140%) blur(12px); -webkit-backdrop-filter:saturate(140%) blur(12px);
     border-bottom:1px solid var(--border-soft);
+    padding-top:env(safe-area-inset-top, 0px);
   }
-  .section-head h3{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px; font-weight:600; letter-spacing:1.4px;
-    color:var(--text-faint); margin:0;
+  .suitebar-in{max-width:var(--maxw, 1240px); margin:0 auto; padding:0 20px; height:52px; display:flex; align-items:center; gap:18px;}
+  .suite-brand{display:flex; align-items:center; gap:9px; text-decoration:none; font-weight:700; font-size:13.5px; letter-spacing:-.1px; color:var(--text); white-space:nowrap;}
+  .suite-mark{width:26px; height:26px; border-radius:7px; display:grid; place-items:center; color:#0b0c10;
+    background:linear-gradient(140deg,#fbbf24,#f59e0b 45%,#818cf8);}
+  .suite-mark svg.i{width:16px; height:16px; stroke-width:2.2;}
+  .suite-links{display:flex; gap:2px; margin-left:auto; overflow-x:auto; scrollbar-width:none;}
+  .suite-links::-webkit-scrollbar{display:none;}
+  .suite-links a{
+    display:flex; align-items:center; gap:7px; padding:6px 11px; border-radius:8px;
+    font-size:12.5px; font-weight:500; color:var(--text-dim); text-decoration:none; white-space:nowrap;
+    transition:background .15s, color .15s;
   }
-  .all-link{
-    font-family:'JetBrains Mono', monospace; font-size:11.5px;
-    color:var(--text-dim); text-decoration:none;
-  }
-  .all-link:hover{color:var(--accent);}
+  .suite-links a:hover{background:var(--panel-2); color:var(--text);}
+  .suite-links a.on{background:var(--panel-3); color:var(--text);}
+  .suite-links a .pip{width:7px; height:7px; border-radius:50%; background:var(--pip);}
 
-  .note{
-    margin-top:30px; background:var(--bg-2); border:1px solid var(--border-soft);
-    border-radius:12px; padding:16px 18px;
-    font-size:12.5px; color:var(--text-faint); line-height:1.7;
+  .wrap{max-width:var(--maxw, 1240px); margin:0 auto; padding:28px 20px 56px;}
+
+  /* product header */
+  header.prod{display:flex; align-items:center; gap:16px; margin-bottom:24px; flex-wrap:wrap;}
+  .prod-icon{
+    width:48px; height:48px; border-radius:13px; flex:none; display:grid; place-items:center;
+    color:var(--accent-ink); background:linear-gradient(145deg, var(--accent-bright), var(--accent) 60%, var(--accent-deep));
+    box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 10px 28px -10px var(--accent);
   }
-  .note strong{color:var(--text-dim); font-weight:600;}
-  .note code{
-    font-family:'JetBrains Mono', monospace; font-size:11.5px;
-    background:var(--panel); padding:2px 6px; border-radius:5px; color:var(--text-dim);
+  .prod-icon svg.i{width:24px; height:24px; stroke-width:2;}
+  h1{font-size:22px; margin:0; font-weight:700; letter-spacing:-.4px; line-height:1.2;}
+  h1 .edition{font-weight:500; color:var(--text-dim);}
+  .sub{font-size:13px; color:var(--text-dim); margin-top:3px;}
+  .badges{margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .badge{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:999px;
+    background:var(--panel); border:1px solid var(--border); color:var(--text-dim);
   }
-  footer{
-    margin-top:26px; text-align:center;
-    font-size:11.5px; color:var(--text-faint);
-    font-family:'JetBrains Mono', monospace;
+  .badge::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.7;}
+  .badge.live{color:var(--win); border-color:#34d39940; background:#34d3990f;}
+  .badge.live::before{opacity:1; animation:pulse 2s infinite;}
+  .badge.mode{color:var(--accent-bright); border-color:var(--accent-line); background:var(--accent-soft);}
+  .badge.warn{color:var(--amber); border-color:#fbbf2440; background:#fbbf240f;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 #34d39966;} 50%{box-shadow:0 0 0 4px #34d39900;}}
+
+  /* panels */
+  .panel{
+    background:linear-gradient(180deg, var(--panel-2), var(--panel) 140px);
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px; margin-bottom:16px; box-shadow:var(--shadow);
   }
-  footer a{color:var(--text-dim); text-decoration:none;}
-  footer a:hover{color:var(--accent);}
+  .panel h2{
+    display:flex; align-items:center; gap:9px;
+    font-size:13.5px; font-weight:600; color:var(--text); margin:0 0 16px; letter-spacing:-.1px;
+  }
+  .panel h2::before{content:""; width:3px; height:14px; border-radius:2px; background:var(--accent);}
+
+  /* setup */
+  .setup details > summary{
+    list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; user-select:none;
+  }
+  .setup details > summary::-webkit-details-marker{display:none;}
+  .setup summary .panel-title{display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:600;}
+  .setup summary .panel-title::before{content:""; width:3px; height:14px; border-radius:2px; background:var(--accent);}
+  .setup summary .summary-hint{font-size:12px; color:var(--text-faint);}
+  .setup summary .chev{margin-left:auto; width:26px; height:26px; border-radius:7px; display:grid; place-items:center; color:var(--text-faint); border:1px solid var(--border); transition:transform .2s;}
+  .setup summary:hover .chev{color:var(--text); border-color:var(--border-strong);}
+  .setup details[open] summary .chev{transform:rotate(180deg);}
+  .setup .setup-body{padding-top:18px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;}
+  label.field{display:block;}
+  label.field span{display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; font-weight:500;}
+  input[type=text], input[type=password], input[type=datetime-local], select{
+    width:100%; height:38px; padding:0 12px; border-radius:var(--radius-sm); background:var(--bg-2);
+    border:1px solid var(--border); color:var(--text); font-size:13px; font-family:var(--mono);
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input::placeholder{color:var(--text-faint);}
+  input[type=text]:hover, input[type=password]:hover, input[type=datetime-local]:hover, select:hover{border-color:var(--border-strong);}
+  input:focus, select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  input[type=datetime-local]::-webkit-calendar-picker-indicator{filter:invert(.7);}
+  .btnrow{display:flex; gap:8px; margin-top:18px; flex-wrap:wrap; align-items:center;}
+  .toggles{display:flex; gap:10px 20px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-soft); flex-wrap:wrap; align-items:center;}
+  button{
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    height:38px; padding:0 16px; border-radius:var(--radius-sm); border:1px solid var(--border);
+    background:var(--panel-2); color:var(--text); font-size:13px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s, transform .05s;
+    box-shadow:0 1px 0 rgba(255,255,255,.04) inset;
+  }
+  button:hover:not(:disabled){border-color:var(--border-strong); background:var(--panel-3);}
+  button:active:not(:disabled){transform:translateY(1px);}
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  button.primary{background:var(--accent); border-color:transparent; color:var(--accent-ink); box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 6px 18px -8px var(--accent);}
+  button.primary:hover:not(:disabled){background:var(--accent-bright); border-color:transparent;}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  button.small{height:32px; padding:0 12px; font-size:12px;}
+  .checkline{display:inline-flex; align-items:center; gap:9px; font-size:12.5px; color:var(--text-dim); cursor:pointer; user-select:none;}
+  .checkline:hover{color:var(--text);}
+  .checkline input[type=checkbox]{
+    -webkit-appearance:none; appearance:none; margin:0; flex:none; cursor:pointer;
+    width:32px; height:19px; border-radius:999px; position:relative;
+    background:var(--panel-3); border:1px solid var(--border-strong); transition:background .15s, border-color .15s;
+  }
+  .checkline input[type=checkbox]::after{
+    content:""; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%;
+    background:var(--text-faint); transition:transform .18s, background .15s;
+  }
+  .checkline input[type=checkbox]:checked{background:var(--accent); border-color:transparent;}
+  .checkline input[type=checkbox]:checked::after{transform:translateX(13px); background:#fff;}
+  .checkline input[type=checkbox]:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .status{
+    margin-top:16px; font-size:12.5px; color:var(--text-dim); line-height:1.55;
+    display:flex; gap:10px; align-items:flex-start;
+    padding:10px 13px; border-radius:var(--radius-sm); background:var(--bg-2); border:1px solid var(--border-soft);
+  }
+  .status::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--text-faint); margin-top:6px; flex:none;}
+  .status.ok{color:#a7f3d0; border-color:#34d39930; background:#34d3990a;} .status.ok::before{background:var(--win);}
+  .status.err{color:#fecaca; border-color:#f8717140; background:#f871710d;} .status.err::before{background:var(--loss);}
+  .status.warn{color:#fde68a; border-color:#fbbf2440; background:#fbbf240d;} .status.warn::before{background:var(--amber);}
+  .hint{font-size:12px; color:var(--text-faint); margin-top:8px; line-height:1.55;}
+  .hint:empty{display:none;}
+  .hint b{color:var(--text-dim); font-weight:600;}
+
+  /* tabs */
+  nav.tabs{
+    display:inline-flex; gap:2px; padding:4px; margin-bottom:18px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+  }
+  nav.tabs button{
+    height:34px; background:none; border:0; box-shadow:none; border-radius:8px;
+    padding:0 16px; color:var(--text-dim); font-size:13px; font-weight:500;
+  }
+  nav.tabs button:hover:not(:disabled){background:var(--panel-2); color:var(--text); border:0;}
+  nav.tabs button.on{background:var(--panel-3); color:var(--text); box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 2px 6px -2px rgba(0,0,0,.6);}
+  nav.tabs button:disabled{opacity:.35;}
+  .view{display:none;} .view.on{display:block; animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(3px);} to{opacity:1; transform:none;}}
+
+  /* stat tiles */
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:16px;}
+  .stat{
+    display:flex; flex-direction:column-reverse; justify-content:flex-end; gap:8px;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 16px;
+    box-shadow:0 1px 0 rgba(255,255,255,.03) inset;
+  }
+  .stat .v{font-size:24px; font-weight:650; letter-spacing:-.6px; line-height:1.1; font-variant-numeric:tabular-nums;}
+  .stat .l{font-size:12px; color:var(--text-dim); font-weight:500;}
+  .stat.win .v{color:var(--win);} .stat.loss .v{color:var(--loss);} .stat.amber .v{color:var(--amber);}
+  .stat.accent .v{color:var(--accent-bright);} .stat.hosp .v{color:var(--hosp);} .stat.neutral .v{color:var(--neutral);}
+  .stat.energy .v{color:var(--energy);} .stat.xan .v{color:var(--xan);} .stat.point .v{color:var(--point);}
+
+  /* sparkline */
+  .spark{display:flex; align-items:flex-end; gap:3px; height:72px; margin-top:4px;}
+  .spark div{flex:1; background:linear-gradient(180deg, var(--accent-bright), var(--accent)); border-radius:3px 3px 1px 1px; min-height:2px;}
+  .spark div.quiet{background:var(--panel-3);}
+  .sparkaxis{display:flex; justify-content:space-between; font-size:11px; color:var(--text-faint); margin-top:8px; font-family:var(--mono);}
+
+  /* tables */
+  table{width:100%; border-collapse:separate; border-spacing:0; font-size:13px;}
+  thead th{
+    position:sticky; top:0; z-index:1; background:var(--panel-2);
+    text-align:left; font-size:11.5px; color:var(--text-dim); font-weight:600;
+    padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  thead th.sortable{cursor:pointer; user-select:none;}
+  thead th.sortable:hover{color:var(--text);}
+  thead th.sortable::after{content:"↕"; margin-left:5px; opacity:.3; font-size:10px;}
+  thead th.sorted{color:var(--accent-bright);}
+  thead th.sorted::after{opacity:.9;}
+  tbody td{padding:10px 12px; border-bottom:1px solid var(--border-soft); vertical-align:middle; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  tbody tr:last-child td{border-bottom:0;}
+  tbody tr:hover td{background:rgba(255,255,255,.022);}
+  td.num, th.num{text-align:right;}
+  td.num{font-family:var(--mono); font-size:12.5px;}
+  .rank{color:var(--text-faint); font-family:var(--mono); font-size:12px;}
+  .name{font-weight:600;}
+  .plink{color:var(--text); text-decoration:none; border-bottom:1px solid transparent; transition:color .15s, border-color .15s;}
+  .plink:hover{color:var(--accent-bright); border-color:var(--accent-line);}
+  .tag{
+    display:inline-flex; align-items:center; padding:2px 9px; border-radius:6px; font-size:11.5px; font-weight:600;
+    background:var(--panel-2); color:var(--text-dim); border:1px solid var(--border); white-space:nowrap;
+  }
+  .tblwrap{overflow:auto; max-height:640px; border:1px solid var(--border-soft); border-radius:11px; background:var(--bg-2);}
+  .tblfoot{display:flex; justify-content:space-between; align-items:center; margin-top:14px; gap:10px; flex-wrap:wrap;}
+  .tblfoot > span:last-child{display:flex; gap:8px; flex-wrap:wrap;}
+  .count{font-size:12px; color:var(--text-faint); font-family:var(--mono);}
+  td.empty{padding:34px; text-align:center; color:var(--text-faint);}
+  div.empty{
+    padding:48px 24px; text-align:center; color:var(--text-dim); font-size:13.5px; line-height:1.6;
+    border:1px dashed var(--border-strong); border-radius:var(--radius); background:rgba(15,17,23,.5);
+  }
+  div.empty::before{
+    content:""; display:block; width:30px; height:30px; margin:0 auto 14px; background:var(--accent-bright); opacity:.8;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3.5'/%3E%3Cpath d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3.5'/%3E%3Cpath d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+  .filterrow{display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .filterrow input[type=text]{max-width:240px; font-family:inherit;}
+  .filterrow select{max-width:200px; font-family:inherit;}
+  .notefoot{font-size:12px; color:var(--text-faint); line-height:1.65; margin-top:14px;}
+  .notefoot b{color:var(--text-dim); font-weight:600;}
+
+  footer.suitefoot{
+    max-width:var(--maxw, 1240px); margin:8px auto 0; padding:22px 20px calc(30px + env(safe-area-inset-bottom, 0px));
+    border-top:1px solid var(--border-soft);
+    display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    font-size:12px; color:var(--text-faint);
+  }
+  footer.suitefoot .lock{display:flex; align-items:center; gap:8px;}
+  footer.suitefoot .lock svg.i{width:15px; height:15px; color:var(--win);}
+  footer.suitefoot a{color:var(--text-dim); text-decoration:none;}
+  footer.suitefoot a:hover{color:var(--text);}
+
+  @media (max-width:640px){
+    .suitebar-in{padding:0 14px; gap:10px;}
+    .suite-brand span.txt{display:none;}
+    .wrap{padding:20px 14px 40px;}
+    h1{font-size:19px;}
+    .prod-icon{width:42px; height:42px;}
+    .badges{margin-left:0; width:100%;}
+    .stat .v{font-size:20px;}
+    .panel{padding:16px;}
+    nav.tabs{display:flex; width:100%;}
+    nav.tabs button{flex:1; padding:0 8px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+
+  /* ── Home ── */
+  :root{
+    --maxw:1040px;
+    --accent:#f5b42a; --accent-bright:#ffcf5c; --accent-deep:#c98a0c;
+    --accent-soft:#f5b42a1c; --accent-line:#f5b42a55; --accent-ink:#1a1300; --accent-glow:#8b7bff1c;
+  }
+  .hero{padding:56px 0 40px; text-align:center;}
+  .hero .mark{
+    width:64px; height:64px; border-radius:18px; margin:0 auto 22px; display:grid; place-items:center; color:#0b0c10;
+    background:linear-gradient(140deg,#fbbf24,#f59e0b 45%,#818cf8);
+    box-shadow:0 1px 0 rgba(255,255,255,.35) inset, 0 18px 50px -14px rgba(245,180,42,.55), 0 18px 60px -20px rgba(129,140,248,.6);
+  }
+  .hero .mark svg.i{width:32px; height:32px; stroke-width:2.1;}
+  .hero h1{font-size:44px; font-weight:800; letter-spacing:-1.6px; line-height:1.05;
+    background:linear-gradient(180deg,#fff 30%, #b9bdcc); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .hero p.lede{font-size:16.5px; color:var(--text-dim); max-width:560px; margin:16px auto 0; line-height:1.6;}
+  .chips{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:24px;}
+  .chip{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:500; color:var(--text-dim);
+    padding:6px 12px; border-radius:999px; border:1px solid var(--border); background:rgba(15,17,23,.7);}
+  .chip svg.i{width:14px; height:14px; color:var(--win);}
+
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:40px 0 16px;}
+  .section-head h2{font-size:18px; font-weight:700; letter-spacing:-.3px; margin:0;}
+  .section-head p{font-size:13px; color:var(--text-faint); margin:4px 0 0;}
+  .all-link{font-size:12.5px; font-weight:600; color:var(--text-dim); text-decoration:none; white-space:nowrap;}
+  .all-link:hover{color:var(--text);}
+
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(400px,1fr)); gap:16px;}
+  a.card{
+    --c:#9d7bff; --c2:#6d48e8;
+    position:relative; overflow:hidden; display:flex; flex-direction:column; text-decoration:none; color:inherit;
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid var(--border); border-radius:16px; padding:22px; box-shadow:var(--shadow);
+    transition:border-color .2s, transform .2s, box-shadow .2s;
+  }
+  a.card::before{
+    content:""; position:absolute; inset:0 0 auto 0; height:120px; pointer-events:none;
+    background:radial-gradient(360px 120px at 0% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 70%);
+  }
+  a.card:hover{border-color:color-mix(in srgb, var(--c) 45%, var(--border)); transform:translateY(-3px);
+    box-shadow:var(--shadow), 0 24px 50px -30px color-mix(in srgb, var(--c) 70%, transparent);}
+  a.card:focus-visible{outline:2px solid var(--c); outline-offset:3px;}
+  .card-top{position:relative; display:flex; align-items:center; gap:13px; margin-bottom:14px;}
+  .card-icon{width:42px; height:42px; border-radius:12px; flex:none; display:grid; place-items:center; color:#fff;
+    background:linear-gradient(145deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, var(--c2));
+    box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 8px 22px -10px var(--c);}
+  .card-icon svg.i{width:21px; height:21px; stroke-width:2;}
+  .card h3{font-size:17px; font-weight:700; margin:0; letter-spacing:-.3px;}
+  .card h3 span{font-weight:500; color:var(--text-dim);}
+  .card .aud{font-size:12px; color:var(--text-faint); margin-top:1px;}
+  .card p{position:relative; color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 14px;}
+  .card ul{position:relative; list-style:none; padding:0; margin:0 0 18px; display:grid; gap:7px;}
+  .card li{display:flex; gap:9px; font-size:13px; color:var(--text-dim);}
+  .card li::before{content:""; width:5px; height:5px; border-radius:50%; background:var(--c); margin-top:7px; flex:none;}
+  .card-foot{position:relative; margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:14px; border-top:1px solid var(--border-soft);}
+  .req{font-size:11.5px; color:var(--text-faint); display:flex; align-items:center; gap:6px;}
+  .req svg.i{width:13px; height:13px;}
+  .go{font-size:13px; font-weight:600; color:color-mix(in srgb, var(--c) 75%, #fff); display:flex; align-items:center; gap:6px;}
+  .go svg.i{width:15px; height:15px; transition:transform .2s;}
+  a.card:hover .go svg.i{transform:translateX(3px);}
+  .card.solo{--c:#9d7bff; --c2:#6d48e8;}
+  .card.command{--c:#6b7bff; --c2:#4450d6;}
+  .card.chain{--c:#f5b42a; --c2:#c98a0c;}
+  .card.chain .card-icon{color:#1a1300;}
+  .card.script{--c:#34d399; --c2:#059669;}
+  .card.script .card-icon{color:#04291c;}
+
+  .trust{
+    margin-top:44px; display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
+    padding:20px 22px; border-radius:16px; border:1px solid var(--border); background:var(--panel);
+  }
+  .trust .ti{width:38px; height:38px; border-radius:11px; display:grid; place-items:center; color:var(--win); background:#34d39914; border:1px solid #34d39933;}
+  .trust h3{margin:0 0 4px; font-size:14.5px; font-weight:650;}
+  .trust p{margin:0; font-size:13px; color:var(--text-dim); line-height:1.65;}
+  .trust code{font-family:var(--mono); font-size:12px; background:var(--panel-3); padding:1px 6px; border-radius:5px; color:var(--text);}
+  @media (max-width:640px){
+    .hero{padding:36px 0 24px;}
+    .hero h1{font-size:34px;}
+    .hero p.lede{font-size:15px;}
+    .cards{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
+
+<nav class="suitebar"><div class="suitebar-in">
+  <a class="suite-brand" href="index.html"><span class="suite-mark"><svg class="i" viewBox="0 0 24 24"><path d="M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z"/><circle cx="12" cy="12" r="2.6"/></svg></span><span class="txt">Torn Command</span></a>
+  <div class="suite-links">
+    <a href="HitFeed_Solo.html" style="--pip:#9d7bff"><span class="pip"></span>Hitfeed Solo</a>
+    <a href="HitFeed_Command.html" style="--pip:#6b7bff"><span class="pip"></span>Hitfeed Command</a>
+    <a href="ChainFeed_Command.html" style="--pip:#f5b42a"><span class="pip"></span>Chainfeed</a>
+  </div>
+</div></nav>
+
 <div class="wrap">
 
-  <div class="brand">
-    <div class="mark">TC</div>
-    <h1>TORN COMMAND</h1>
+  <section class="hero">
+    <div class="mark"><svg class="i" viewBox="0 0 24 24"><path d="M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z"/><circle cx="12" cy="12" r="2.6"/></svg></div>
+    <h1>Torn Command</h1>
+    <p class="lede">Ranked war and chain tools for Torn factions. Open one in your browser, paste your API key, and you're done — nothing to install.</p>
+    <div class="chips">
+      <span class="chip"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Runs in your browser</span>
+      <span class="chip"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Key never leaves your device</span>
+      <span class="chip"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Works on phone and desktop</span>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>For members</h2>
+      <p>Check your own numbers without asking leadership.</p>
+    </div>
   </div>
-  <p class="sub">Browser-based war and chain tooling. Nothing installs, nothing uploads.</p>
-
-  <div class="section-head" style="margin-top:0;">
-    <h3>WEB TOOLS</h3>
-  </div>
-
-  <div class="grid">
-
-    <a class="card" href="HitFeed_Command.html">
+  <div class="cards">
+    <a class="card solo" href="HitFeed_Solo.html">
       <div class="card-top">
-        <h2>HITFEED</h2>
-        <span class="badge live">War</span>
+        <div class="card-icon"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20.5c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></svg></div>
+        <div><h3>Hitfeed <span>Solo</span></h3><div class="aud">Personal war tracker</div></div>
       </div>
-      <p>Live war command board — track hits, targets and momentum across the faction in real time.</p>
-      <div class="go">OPEN &rarr;</div>
-    </a>
-
-    <a class="card" href="ChainFeed_Command.html">
-      <div class="card-top">
-        <h2>CHAINFEED</h2>
-        <span class="badge">Chain</span>
+      <p>How many hits have I made? One click finds the current war and counts your hits.</p>
+      <ul>
+        <li>War hits, hosp / mug / leave, assists and losses</li>
+        <li>Respect, fair fight and energy used</li>
+        <li>One-tap summary to paste in faction chat</li>
+      </ul>
+      <div class="card-foot">
+        <span class="req"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2"/></svg>Any Limited key</span>
+        <span class="go">Open <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
-      <p>Chain command board — watch the timer, spot stalls and keep the chain rolling.</p>
-      <div class="go">OPEN &rarr;</div>
     </a>
-
   </div>
 
   <div class="section-head">
-    <h3>USERSCRIPTS</h3>
-    <a class="all-link" href="https://greasyfork.org/en/users/1640828-nyxii" target="_blank" rel="noopener">all scripts &rarr;</a>
+    <div>
+      <h2>For leadership</h2>
+      <p>Faction-wide boards. These need a key with faction API access.</p>
+    </div>
   </div>
-
-  <div class="grid">
-
-    <a class="card" href="https://greasyfork.org/en/scripts/594352-vulture-war-hospital-timers" target="_blank" rel="noopener">
+  <div class="cards">
+    <a class="card command" href="HitFeed_Command.html">
       <div class="card-top">
-        <h2>VULTURE</h2>
-        <span class="badge script">Userscript</span>
+        <div class="card-icon"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg></div>
+        <div><h3>Hitfeed <span>Command</span></h3><div class="aud">Ranked war board</div></div>
       </div>
-      <p>Live enemy out-of-hospital timers and hospitalisation reason, straight on the ranked war page. Low overhead.</p>
-      <div class="go">INSTALL &rarr;</div>
+      <p>Live war board for the whole faction, plus the payout report at the end.</p>
+      <ul>
+        <li>Lead vs target, estimated finish and momentum</li>
+        <li>Faction leaderboard with configurable payout shares</li>
+        <li>Enemy target list with hospital timers and online status</li>
+      </ul>
+      <div class="card-foot">
+        <span class="req"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2"/></svg>Faction API access</span>
+        <span class="go">Open <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
     </a>
 
+    <a class="card chain" href="ChainFeed_Command.html">
+      <div class="card-top">
+        <div class="card-icon"><svg class="i" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4l-.9.9"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l.9-.9"/></svg></div>
+        <div><h3>Chainfeed</h3><div class="aud">Chain monitor</div></div>
+      </div>
+      <p>Keep the chain alive, and see where the faction's Xanax and points actually went.</p>
+      <ul>
+        <li>Live timeout countdown and bonus-hit warnings</li>
+        <li>Consumable energy in vs energy spent, per member</li>
+        <li>Flags members who took consumables they didn't spend on the chain</li>
+      </ul>
+      <div class="card-foot">
+        <span class="req"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2"/></svg>Faction API access</span>
+        <span class="go">Open <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </a>
   </div>
 
-  <div class="note">
-    <strong>Your API key never leaves your browser.</strong><br>
-    These are static pages. Your key is used only to call <code>api.torn.com</code> directly from your own
-    machine — it is never sent to this site, stored on a server, or visible to anyone else.
-    ChainFeed needs a key with faction access.
+  <div class="section-head">
+    <div>
+      <h2>Userscripts</h2>
+      <p>Add-ons that run on torn.com itself, via Tampermonkey or Torn PDA.</p>
+    </div>
+    <a class="all-link" href="https://greasyfork.org/en/users/1640828-nyxii" target="_blank" rel="noopener">All scripts →</a>
+  </div>
+  <div class="cards">
+    <a class="card script" href="https://greasyfork.org/en/scripts/594352-vulture-war-hospital-timers" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-icon"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg></div>
+        <div><h3>Vulture</h3><div class="aud">War hospital timers</div></div>
+      </div>
+      <p>Live enemy out-of-hospital timers and the reason they were hospitalised, right on the ranked war page. Low overhead.</p>
+      <div class="card-foot">
+        <span class="req"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>Greasy Fork</span>
+        <span class="go">Install <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </a>
   </div>
 
-  <footer>
-    <a href="https://github.com/Nyxii5" target="_blank" rel="noopener">github</a>
-    &nbsp;·&nbsp;
-    <a href="https://greasyfork.org/en/users/1640828-nyxii" target="_blank" rel="noopener">greasy fork</a>
-  </footer>
+  <div class="trust">
+    <div class="ti"><svg class="i" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></div>
+    <div>
+      <h3>Your API key never leaves your browser</h3>
+      <p>These are static pages. Your key is only used to call <code>api.torn.com</code> directly from your own device. It is never sent to this site, stored on a server, or visible to anyone else. "Remember key" is off by default, and when you turn it on the key is only saved in this browser.</p>
+    </div>
+  </div>
 
 </div>
+
+<footer class="suitefoot">
+  <span>Torn Command · built for Torn factions</span>
+  <span>
+    <a href="https://github.com/Nyxii5" target="_blank" rel="noopener">GitHub</a>
+    &nbsp;·&nbsp;
+    <a href="https://greasyfork.org/en/users/1640828-nyxii" target="_blank" rel="noopener">Greasy Fork</a>
+  </span>
+</footer>
+
 </body>
 </html>
