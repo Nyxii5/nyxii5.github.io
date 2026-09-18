@@ -348,8 +348,9 @@
   .card.command{--c:#6b7bff; --c2:#4450d6;}
   .card.chain{--c:#f5b42a; --c2:#c98a0c;}
   .card.chain .card-icon{color:#1a1300;}
-  .card.script{--c:#34d399; --c2:#059669;}
-  .card.script .card-icon{color:#04291c;}
+  .card.script{--c:#ef4444; --c2:#b91c1c;}
+  .card.stockpile{--c:#2dd4bf; --c2:#0f766e;}
+  .card.stockpile .card-icon{color:#04201c;}
 
   .trust{
     margin-top:44px; display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
@@ -471,9 +472,31 @@
         <div class="card-icon"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg></div>
         <div><h3>Vulture</h3><div class="aud">War hospital timers</div></div>
       </div>
-      <p>Live enemy out-of-hospital timers and the reason they were hospitalised, right on the ranked war page. Low overhead.</p>
+      <p>Live enemy out-of-hospital timers, right on the ranked war page. Low overhead.</p>
+      <ul>
+        <li>Countdown on every enemy in hospital, with the reason</li>
+        <li>"Next out" list with one-tap Attack buttons</li>
+        <li>Works in Tampermonkey and Torn PDA</li>
+      </ul>
       <div class="card-foot">
-        <span class="req"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>Greasy Fork</span>
+        <span class="req"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2"/></svg>Public key · Greasy Fork</span>
+        <span class="go">Install <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card stockpile" href="https://greasyfork.org/en/scripts/596417-stockpile-low-stock-manager" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-icon"><svg class="i" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></div>
+        <div><h3>Stockpile</h3><div class="aud">Low stock manager</div></div>
+      </div>
+      <p>Never find out you're out of Xanax or blood bags at the moment you need them. Set a minimum and target for any item.</p>
+      <ul>
+        <li>Healthy, low and critical warnings, sorted by urgency</li>
+        <li>Restock cost from market prices, plus a shopping list</li>
+        <li>Normal, War and Travel stock profiles</li>
+      </ul>
+      <div class="card-foot">
+        <span class="req"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2"/></svg>Minimal key · Greasy Fork</span>
         <span class="go">Install <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
       </div>
     </a>
