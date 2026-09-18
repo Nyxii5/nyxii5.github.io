@@ -2,195 +2,362 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HITFEED — Torn War Command</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080b">
+<title>Hitfeed Command — Torn Command</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%236b7bff'/%3E%3Cg fill='none' stroke='white' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Cpath d='M12 3v4M12 17v4M3 12h4M17 12h4'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
+  /* ── Torn Command design system (shared by every page in the suite) ── */
   :root{
-    --bg:#0a0b0f;
-    --bg-2:#0e1016;
-    --panel:#13151c;
-    --panel-2:#181b24;
-    --border:#22252f;
-    --border-soft:#1a1c25;
-    --text:#eceef2;
-    --text-dim:#8b8fa3;
-    --text-faint:#5a5e6e;
-    --accent:#6c7dfa;
-    --accent-soft:#6c7dfa1a;
-    --accent-bright:#8b98ff;
-    --win:#3ecf8e;
-    --loss:#f2665a;
-    --amber:#f0b429;
-    --neutral:#7b8194;
-    --enemy:#f2665a;
-    --hosp:#4fb3d9;
+    color-scheme:dark;
+    --bg:#07080b; --bg-2:#0b0d12;
+    --panel:#0f1117; --panel-2:#141720; --panel-3:#1b1f2a;
+    --border:#222632; --border-soft:#181b24; --border-strong:#2d3240;
+    --text:#eef0f5; --text-dim:#9ba1b3; --text-faint:#646a7b;
+    --win:#34d399; --loss:#f87171; --amber:#fbbf24; --neutral:#8b91a3;
+    --enemy:#f87171; --hosp:#38bdf8; --energy:#818cf8; --xan:#c084fc; --point:#38bdf8;
+    --radius:14px; --radius-sm:9px;
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --shadow:0 1px 0 rgba(255,255,255,.035) inset, 0 16px 40px -24px rgba(0,0,0,.8);
   }
   *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
   body{
-    margin:0;
-    background:
-      radial-gradient(1200px 600px at 15% -10%, #14162280 0%, transparent 60%),
-      radial-gradient(1000px 500px at 100% 0%, #10122070 0%, transparent 55%),
-      var(--bg);
-    color:var(--text);
-    font-family:'Inter', -apple-system, sans-serif;
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh;
+    margin:0; background:var(--bg); color:var(--text);
+    font:14px/1.5 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings:'cv11','ss01';
+    -webkit-font-smoothing:antialiased; min-height:100vh;
   }
-  ::selection{background:var(--accent); color:#fff;}
-  .wrap{max-width:1240px; margin:0 auto; padding:24px 20px 60px;}
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 0%, #000 20%, transparent 75%);
+            mask-image:radial-gradient(ellipse 70% 55% at 50% 0%, #000 20%, transparent 75%);
+  }
+  body::after{
+    content:""; position:fixed; left:50%; top:-260px; width:1100px; height:520px; transform:translateX(-50%);
+    z-index:-1; pointer-events:none;
+    background:radial-gradient(closest-side, var(--accent-glow), transparent);
+  }
+  ::selection{background:var(--accent); color:var(--accent-ink);}
+  a{color:inherit;}
+  svg.i{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none;}
 
-  header{display:flex; align-items:center; gap:14px; margin-bottom:22px; flex-wrap:wrap;}
-  .logo{
-    width:38px; height:38px; border-radius:10px; flex:none;
-    background:linear-gradient(140deg, var(--accent), #4d5ed8);
-    display:grid; place-items:center; font-weight:800; font-size:13px; letter-spacing:.5px;
+  /* suite bar */
+  .suitebar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(7,8,11,.78); backdrop-filter:saturate(140%) blur(12px); -webkit-backdrop-filter:saturate(140%) blur(12px);
+    border-bottom:1px solid var(--border-soft);
+    padding-top:env(safe-area-inset-top, 0px);
   }
-  h1{font-size:19px; margin:0; font-weight:700; letter-spacing:-.2px;}
-  .sub{font-size:12px; color:var(--text-faint); margin-top:1px;}
+  .suitebar-in{max-width:var(--maxw, 1240px); margin:0 auto; padding:0 20px; height:52px; display:flex; align-items:center; gap:18px;}
+  .suite-brand{display:flex; align-items:center; gap:9px; text-decoration:none; font-weight:700; font-size:13.5px; letter-spacing:-.1px; color:var(--text); white-space:nowrap;}
+  .suite-mark{width:26px; height:26px; border-radius:7px; display:grid; place-items:center; color:#0b0c10;
+    background:linear-gradient(140deg,#fbbf24,#f59e0b 45%,#818cf8);}
+  .suite-mark svg.i{width:16px; height:16px; stroke-width:2.2;}
+  .suite-links{display:flex; gap:2px; margin-left:auto; overflow-x:auto; scrollbar-width:none;}
+  .suite-links::-webkit-scrollbar{display:none;}
+  .suite-links a{
+    display:flex; align-items:center; gap:7px; padding:6px 11px; border-radius:8px;
+    font-size:12.5px; font-weight:500; color:var(--text-dim); text-decoration:none; white-space:nowrap;
+    transition:background .15s, color .15s;
+  }
+  .suite-links a:hover{background:var(--panel-2); color:var(--text);}
+  .suite-links a.on{background:var(--panel-3); color:var(--text);}
+  .suite-links a .pip{width:7px; height:7px; border-radius:50%; background:var(--pip);}
+
+  .wrap{max-width:var(--maxw, 1240px); margin:0 auto; padding:28px 20px 56px;}
+
+  /* product header */
+  header.prod{display:flex; align-items:center; gap:16px; margin-bottom:24px; flex-wrap:wrap;}
+  .prod-icon{
+    width:48px; height:48px; border-radius:13px; flex:none; display:grid; place-items:center;
+    color:var(--accent-ink); background:linear-gradient(145deg, var(--accent-bright), var(--accent) 60%, var(--accent-deep));
+    box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 10px 28px -10px var(--accent);
+  }
+  .prod-icon svg.i{width:24px; height:24px; stroke-width:2;}
+  h1{font-size:22px; margin:0; font-weight:700; letter-spacing:-.4px; line-height:1.2;}
+  h1 .edition{font-weight:500; color:var(--text-dim);}
+  .sub{font-size:13px; color:var(--text-dim); margin-top:3px;}
   .badges{margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
   .badge{
-    font-size:11px; font-weight:600; padding:5px 10px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:999px;
     background:var(--panel); border:1px solid var(--border); color:var(--text-dim);
   }
-  .badge.live{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
-  .badge.mode{color:var(--accent-bright); border-color:#6c7dfa40; background:var(--accent-soft);}
-  .badge.warn{color:var(--amber); border-color:#f0b42940; background:#f0b42912;}
+  .badge::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.7;}
+  .badge.live{color:var(--win); border-color:#34d39940; background:#34d3990f;}
+  .badge.live::before{opacity:1; animation:pulse 2s infinite;}
+  .badge.mode{color:var(--accent-bright); border-color:var(--accent-line); background:var(--accent-soft);}
+  .badge.warn{color:var(--amber); border-color:#fbbf2440; background:#fbbf240f;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 #34d39966;} 50%{box-shadow:0 0 0 4px #34d39900;}}
 
+  /* panels */
   .panel{
-    background:var(--panel); border:1px solid var(--border); border-radius:14px;
-    padding:18px; margin-bottom:16px;
+    background:linear-gradient(180deg, var(--panel-2), var(--panel) 140px);
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px; margin-bottom:16px; box-shadow:var(--shadow);
   }
   .panel h2{
-    font-size:11px; text-transform:uppercase; letter-spacing:1.2px;
-    color:var(--text-faint); margin:0 0 14px; font-weight:600;
+    display:flex; align-items:center; gap:9px;
+    font-size:13.5px; font-weight:600; color:var(--text); margin:0 0 16px; letter-spacing:-.1px;
   }
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px;}
+  .panel h2::before{content:""; width:3px; height:14px; border-radius:2px; background:var(--accent);}
+
+  /* setup */
+  .setup details > summary{
+    list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; user-select:none;
+  }
+  .setup details > summary::-webkit-details-marker{display:none;}
+  .setup summary .panel-title{display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:600;}
+  .setup summary .panel-title::before{content:""; width:3px; height:14px; border-radius:2px; background:var(--accent);}
+  .setup summary .summary-hint{font-size:12px; color:var(--text-faint);}
+  .setup summary .chev{margin-left:auto; width:26px; height:26px; border-radius:7px; display:grid; place-items:center; color:var(--text-faint); border:1px solid var(--border); transition:transform .2s;}
+  .setup summary:hover .chev{color:var(--text); border-color:var(--border-strong);}
+  .setup details[open] summary .chev{transform:rotate(180deg);}
+  .setup .setup-body{padding-top:18px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;}
   label.field{display:block;}
-  label.field span{display:block; font-size:11px; color:var(--text-dim); margin-bottom:5px; font-weight:500;}
-  input[type=text], input[type=password], input[type=datetime-local]{
-    width:100%; padding:9px 11px; border-radius:8px; background:var(--bg-2);
-    border:1px solid var(--border); color:var(--text); font-size:13px;
-    font-family:'JetBrains Mono', monospace;
+  label.field span{display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; font-weight:500;}
+  input[type=text], input[type=password], input[type=datetime-local], select{
+    width:100%; height:38px; padding:0 12px; border-radius:var(--radius-sm); background:var(--bg-2);
+    border:1px solid var(--border); color:var(--text); font-size:13px; font-family:var(--mono);
+    transition:border-color .15s, box-shadow .15s;
   }
-  input:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent;}
-  .btnrow{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap; align-items:center;}
+  input::placeholder{color:var(--text-faint);}
+  input[type=text]:hover, input[type=password]:hover, input[type=datetime-local]:hover, select:hover{border-color:var(--border-strong);}
+  input:focus, select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  input[type=datetime-local]::-webkit-calendar-picker-indicator{filter:invert(.7);}
+  .btnrow{display:flex; gap:8px; margin-top:18px; flex-wrap:wrap; align-items:center;}
+  .toggles{display:flex; gap:10px 20px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-soft); flex-wrap:wrap; align-items:center;}
   button{
-    padding:9px 15px; border-radius:8px; border:1px solid var(--border);
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    height:38px; padding:0 16px; border-radius:var(--radius-sm); border:1px solid var(--border);
     background:var(--panel-2); color:var(--text); font-size:13px; font-weight:600;
-    cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s;
+    cursor:pointer; font-family:inherit; transition:border-color .15s, background .15s, transform .05s;
+    box-shadow:0 1px 0 rgba(255,255,255,.04) inset;
   }
-  button:hover:not(:disabled){border-color:var(--accent); background:#1d2130;}
+  button:hover:not(:disabled){border-color:var(--border-strong); background:var(--panel-3);}
+  button:active:not(:disabled){transform:translateY(1px);}
   button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-  button.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
-  button.primary:hover:not(:disabled){background:var(--accent-bright); border-color:var(--accent-bright);}
+  button.primary{background:var(--accent); border-color:transparent; color:var(--accent-ink); box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 6px 18px -8px var(--accent);}
+  button.primary:hover:not(:disabled){background:var(--accent-bright); border-color:transparent;}
   button:disabled{opacity:.45; cursor:not-allowed;}
-  button.small{padding:6px 11px; font-size:12px;}
-  .checkline{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-dim); cursor:pointer;}
-  .checkline input{accent-color:var(--accent);}
-  .status{margin-top:12px; font-size:12px; color:var(--text-dim); min-height:16px;}
-  .status.ok{color:var(--win);} .status.err{color:var(--loss);} .status.warn{color:var(--amber);}
-  .hint{font-size:11px; color:var(--text-faint); margin-top:6px; line-height:1.5;}
+  button.small{height:32px; padding:0 12px; font-size:12px;}
+  .checkline{display:inline-flex; align-items:center; gap:9px; font-size:12.5px; color:var(--text-dim); cursor:pointer; user-select:none;}
+  .checkline:hover{color:var(--text);}
+  .checkline input[type=checkbox]{
+    -webkit-appearance:none; appearance:none; margin:0; flex:none; cursor:pointer;
+    width:32px; height:19px; border-radius:999px; position:relative;
+    background:var(--panel-3); border:1px solid var(--border-strong); transition:background .15s, border-color .15s;
+  }
+  .checkline input[type=checkbox]::after{
+    content:""; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%;
+    background:var(--text-faint); transition:transform .18s, background .15s;
+  }
+  .checkline input[type=checkbox]:checked{background:var(--accent); border-color:transparent;}
+  .checkline input[type=checkbox]:checked::after{transform:translateX(13px); background:#fff;}
+  .checkline input[type=checkbox]:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .status{
+    margin-top:16px; font-size:12.5px; color:var(--text-dim); line-height:1.55;
+    display:flex; gap:10px; align-items:flex-start;
+    padding:10px 13px; border-radius:var(--radius-sm); background:var(--bg-2); border:1px solid var(--border-soft);
+  }
+  .status::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--text-faint); margin-top:6px; flex:none;}
+  .status.ok{color:#a7f3d0; border-color:#34d39930; background:#34d3990a;} .status.ok::before{background:var(--win);}
+  .status.err{color:#fecaca; border-color:#f8717140; background:#f871710d;} .status.err::before{background:var(--loss);}
+  .status.warn{color:#fde68a; border-color:#fbbf2440; background:#fbbf240d;} .status.warn::before{background:var(--amber);}
+  .hint{font-size:12px; color:var(--text-faint); margin-top:8px; line-height:1.55;}
+  .hint:empty{display:none;}
+  .hint b{color:var(--text-dim); font-weight:600;}
 
-  nav.tabs{display:flex; gap:4px; margin-bottom:16px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
+  /* tabs */
+  nav.tabs{
+    display:inline-flex; gap:2px; padding:4px; margin-bottom:18px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+  }
   nav.tabs button{
-    background:none; border:none; border-bottom:2px solid transparent; border-radius:0;
-    padding:10px 14px; color:var(--text-faint); font-size:13px;
+    height:34px; background:none; border:0; box-shadow:none; border-radius:8px;
+    padding:0 16px; color:var(--text-dim); font-size:13px; font-weight:500;
   }
-  nav.tabs button:hover:not(:disabled){background:none; color:var(--text-dim); border-color:var(--border);}
-  nav.tabs button.on{color:var(--text); border-bottom-color:var(--accent);}
-  nav.tabs button:disabled{opacity:.3;}
-  .view{display:none;} .view.on{display:block;}
+  nav.tabs button:hover:not(:disabled){background:var(--panel-2); color:var(--text); border:0;}
+  nav.tabs button.on{background:var(--panel-3); color:var(--text); box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 2px 6px -2px rgba(0,0,0,.6);}
+  nav.tabs button:disabled{opacity:.35;}
+  .view{display:none;} .view.on{display:block; animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(3px);} to{opacity:1; transform:none;}}
 
-  .score{margin-bottom:16px;}
-  .scorehead{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; gap:12px; flex-wrap:wrap;}
-  .sname{font-size:13px; font-weight:600;}
-  .sname.us{color:var(--accent-bright);} .sname.them{color:var(--enemy);}
-  .sval{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600;}
-  .track{
-    position:relative; height:34px; border-radius:8px; overflow:hidden;
-    background:var(--bg-2); border:1px solid var(--border-soft); display:flex;
+  /* stat tiles */
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:16px;}
+  .stat{
+    display:flex; flex-direction:column-reverse; justify-content:flex-end; gap:8px;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 16px;
+    box-shadow:0 1px 0 rgba(255,255,255,.03) inset;
   }
-  .fill-us{background:linear-gradient(90deg,#4d5ed8,var(--accent)); transition:width .5s ease;}
-  .fill-them{background:linear-gradient(90deg,#8c3a33,var(--enemy)); transition:width .5s ease; margin-left:auto;}
-  .target-mark{position:absolute; top:0; bottom:0; width:2px; background:var(--amber); opacity:.9;}
-  .target-lab{
-    position:absolute; top:100%; margin-top:4px; transform:translateX(-50%);
-    font-size:10px; color:var(--amber); font-family:'JetBrains Mono',monospace; white-space:nowrap;
-  }
-  .scorefoot{display:flex; gap:18px; margin-top:22px; flex-wrap:wrap; font-size:12px; color:var(--text-dim);}
-  .scorefoot b{color:var(--text); font-family:'JetBrains Mono',monospace; font-weight:600;}
+  .stat .v{font-size:24px; font-weight:650; letter-spacing:-.6px; line-height:1.1; font-variant-numeric:tabular-nums;}
+  .stat .l{font-size:12px; color:var(--text-dim); font-weight:500;}
+  .stat.win .v{color:var(--win);} .stat.loss .v{color:var(--loss);} .stat.amber .v{color:var(--amber);}
+  .stat.accent .v{color:var(--accent-bright);} .stat.hosp .v{color:var(--hosp);} .stat.neutral .v{color:var(--neutral);}
+  .stat.energy .v{color:var(--energy);} .stat.xan .v{color:var(--xan);} .stat.point .v{color:var(--point);}
 
-  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px; margin-bottom:16px;}
-  .stat{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:13px 14px;}
-  .stat .v{font-size:23px; font-weight:700; font-family:'JetBrains Mono',monospace; letter-spacing:-.5px;}
-  .stat .l{font-size:10px; text-transform:uppercase; letter-spacing:.9px; color:var(--text-faint); margin-top:3px; font-weight:600;}
-  .stat.win .v{color:var(--win);} .stat.loss .v{color:var(--loss);}
-  .stat.amber .v{color:var(--amber);} .stat.accent .v{color:var(--accent-bright);}
+  /* sparkline */
+  .spark{display:flex; align-items:flex-end; gap:3px; height:72px; margin-top:4px;}
+  .spark div{flex:1; background:linear-gradient(180deg, var(--accent-bright), var(--accent)); border-radius:3px 3px 1px 1px; min-height:2px;}
+  .spark div.quiet{background:var(--panel-3);}
+  .sparkaxis{display:flex; justify-content:space-between; font-size:11px; color:var(--text-faint); margin-top:8px; font-family:var(--mono);}
 
-  .spark{display:flex; align-items:flex-end; gap:2px; height:56px; margin-top:6px;}
-  .spark div{flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:2px; opacity:.85;}
-  .spark div.quiet{background:var(--border);}
-  .sparkaxis{display:flex; justify-content:space-between; font-size:10px; color:var(--text-faint); margin-top:6px; font-family:'JetBrains Mono',monospace;}
-
-  table{width:100%; border-collapse:collapse; font-size:13px;}
+  /* tables */
+  table{width:100%; border-collapse:separate; border-spacing:0; font-size:13px;}
   thead th{
-    text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.9px;
-    color:var(--text-faint); font-weight:600; padding:8px 10px;
-    border-bottom:1px solid var(--border); white-space:nowrap;
+    position:sticky; top:0; z-index:1; background:var(--panel-2);
+    text-align:left; font-size:11.5px; color:var(--text-dim); font-weight:600;
+    padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap;
   }
   thead th.sortable{cursor:pointer; user-select:none;}
-  thead th.sortable:hover{color:var(--text-dim);}
+  thead th.sortable:hover{color:var(--text);}
+  thead th.sortable::after{content:"↕"; margin-left:5px; opacity:.3; font-size:10px;}
   thead th.sorted{color:var(--accent-bright);}
-  tbody td{padding:9px 10px; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
-  tbody tr:hover{background:#ffffff05;}
-  td.num, th.num{text-align:right; font-family:'JetBrains Mono',monospace;}
-  .rank{color:var(--text-faint); font-family:'JetBrains Mono',monospace; font-size:12px;}
-  .name{font-weight:600; position:relative;}
-  .bar{position:absolute; left:0; bottom:-4px; height:2px; background:var(--accent); opacity:.5; border-radius:2px;}
-  .plink{color:var(--text); text-decoration:none; border-bottom:1px dotted var(--text-faint);}
-  .plink:hover{color:var(--accent-bright); border-color:var(--accent-bright);}
+  thead th.sorted::after{opacity:.9;}
+  tbody td{padding:10px 12px; border-bottom:1px solid var(--border-soft); vertical-align:middle; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  tbody tr:last-child td{border-bottom:0;}
+  tbody tr:hover td{background:rgba(255,255,255,.022);}
+  td.num, th.num{text-align:right;}
+  td.num{font-family:var(--mono); font-size:12.5px;}
+  .rank{color:var(--text-faint); font-family:var(--mono); font-size:12px;}
+  .name{font-weight:600;}
+  .plink{color:var(--text); text-decoration:none; border-bottom:1px solid transparent; transition:color .15s, border-color .15s;}
+  .plink:hover{color:var(--accent-bright); border-color:var(--accent-line);}
   .tag{
-    display:inline-block; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:600;
-    background:var(--panel-2); color:var(--text-dim); border:1px solid var(--border);
+    display:inline-flex; align-items:center; padding:2px 9px; border-radius:6px; font-size:11.5px; font-weight:600;
+    background:var(--panel-2); color:var(--text-dim); border:1px solid var(--border); white-space:nowrap;
   }
-  .tag.hit{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
-  .tag.assist{color:var(--accent-bright); border-color:#6c7dfa40; background:var(--accent-soft);}
-  .tag.loss{color:var(--loss); border-color:#f2665a40; background:#f2665a12;}
-  .tag.defend_lost{color:var(--amber); border-color:#f0b42940; background:#f0b42912;}
-  .tag.okay{color:var(--win); border-color:#3ecf8e40; background:#3ecf8e12;}
-  .tag.hospital{color:var(--hosp); border-color:#4fb3d940; background:#4fb3d912;}
-  .tag.travel{color:var(--neutral);}
-  .idle-ok{color:var(--win);} .idle-warn{color:var(--amber);} .idle-cold{color:var(--loss);}
-  .tblwrap{overflow:auto; max-height:620px;}
-  .tblfoot{display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:10px; flex-wrap:wrap;}
-  .count{font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
-  .empty{padding:34px; text-align:center; color:var(--text-faint); font-size:13px;}
-  .filterrow{display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;}
-  .filterrow input[type=text]{max-width:220px; font-family:inherit;}
-  footer{margin-top:26px; font-size:11px; color:var(--text-faint); text-align:center; line-height:1.6;}
-  .notefoot{font-size:11px; color:var(--text-faint); line-height:1.6; margin-top:12px;}
+  .tblwrap{overflow:auto; max-height:640px; border:1px solid var(--border-soft); border-radius:11px; background:var(--bg-2);}
+  .tblfoot{display:flex; justify-content:space-between; align-items:center; margin-top:14px; gap:10px; flex-wrap:wrap;}
+  .tblfoot > span:last-child{display:flex; gap:8px; flex-wrap:wrap;}
+  .count{font-size:12px; color:var(--text-faint); font-family:var(--mono);}
+  td.empty{padding:34px; text-align:center; color:var(--text-faint);}
+  div.empty{
+    padding:48px 24px; text-align:center; color:var(--text-dim); font-size:13.5px; line-height:1.6;
+    border:1px dashed var(--border-strong); border-radius:var(--radius); background:rgba(15,17,23,.5);
+  }
+  div.empty::before{
+    content:""; display:block; width:30px; height:30px; margin:0 auto 14px; background:var(--accent-bright); opacity:.8;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3.5'/%3E%3Cpath d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3.5'/%3E%3Cpath d='M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+  .filterrow{display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .filterrow input[type=text]{max-width:240px; font-family:inherit;}
+  .filterrow select{max-width:200px; font-family:inherit;}
+  .notefoot{font-size:12px; color:var(--text-faint); line-height:1.65; margin-top:14px;}
+  .notefoot b{color:var(--text-dim); font-weight:600;}
+
+  footer.suitefoot{
+    max-width:var(--maxw, 1240px); margin:8px auto 0; padding:22px 20px calc(30px + env(safe-area-inset-bottom, 0px));
+    border-top:1px solid var(--border-soft);
+    display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    font-size:12px; color:var(--text-faint);
+  }
+  footer.suitefoot .lock{display:flex; align-items:center; gap:8px;}
+  footer.suitefoot .lock svg.i{width:15px; height:15px; color:var(--win);}
+  footer.suitefoot a{color:var(--text-dim); text-decoration:none;}
+  footer.suitefoot a:hover{color:var(--text);}
+
   @media (max-width:640px){
-    .wrap{padding:16px 12px 40px;}
-    .sval{font-size:18px;}
-    .stat .v{font-size:19px;}
+    .suitebar-in{padding:0 14px; gap:10px;}
+    .suite-brand span.txt{display:none;}
+    .wrap{padding:20px 14px 40px;}
+    h1{font-size:19px;}
+    .prod-icon{width:42px; height:42px;}
+    .badges{margin-left:0; width:100%;}
+    .stat .v{font-size:20px;}
+    .panel{padding:16px;}
+    nav.tabs{display:flex; width:100%;}
+    nav.tabs button{flex:1; padding:0 8px;}
   }
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important; animation:none !important;}
   }
+
+  /* ── Hitfeed Command ── */
+  :root{
+    --accent:#6b7bff; --accent-bright:#99a4ff; --accent-deep:#4450d6;
+    --accent-soft:#6b7bff1f; --accent-line:#6b7bff55; --accent-ink:#ffffff; --accent-glow:#6b7bff26;
+  }
+  .score .scorehead{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px; gap:12px; flex-wrap:wrap;}
+  .sname{font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:7px;}
+  .sname::before{content:""; width:8px; height:8px; border-radius:2px; background:currentColor;}
+  .sname.us{color:var(--accent-bright);} .sname.them{color:var(--enemy); justify-content:flex-end;}
+  .sval{font-size:30px; font-weight:700; letter-spacing:-1px; font-variant-numeric:tabular-nums; margin-top:2px;}
+  .track{position:relative; height:14px; border-radius:999px; overflow:hidden; background:var(--bg-2); border:1px solid var(--border-soft); display:flex;}
+  .track::after{content:""; position:absolute; left:50%; top:-2px; bottom:-2px; width:2px; background:var(--border-strong);}
+  .fill-us{background:linear-gradient(90deg, var(--accent-deep), var(--accent)); transition:width .5s ease;}
+  .fill-them{background:linear-gradient(90deg, #b44343, var(--enemy)); transition:width .5s ease; margin-left:auto;}
+  .leadhead{display:flex; justify-content:space-between; margin-top:18px; font-size:12px; color:var(--text-dim);}
+  .leadhead #leadPct{font-family:var(--mono); color:var(--text);}
+  .leadtrack{height:8px; border-radius:999px; overflow:hidden; background:var(--bg-2); border:1px solid var(--border-soft); margin-top:7px;}
+  .leadfill{height:100%; border-radius:999px; background:linear-gradient(90deg, #059669, var(--win)); transition:width .5s ease;}
+  .leadfill.behind{background:linear-gradient(90deg, #b44343, var(--enemy));}
+  .scorefoot{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0; margin-top:18px; background:var(--panel); border:1px solid var(--border-soft); border-radius:11px; overflow:hidden;}
+  .scorefoot > div{background:var(--panel); box-shadow:0 0 0 .5px var(--border-soft); padding:10px 13px; font-size:11.5px; color:var(--text-faint); display:flex; flex-direction:column; gap:3px;}
+  .scorefoot b{color:var(--text); font-family:var(--mono); font-weight:600; font-size:14px;}
+  .score .hint{margin-top:12px;}
+
+  .bar{position:absolute; left:0; bottom:3px; height:2px; background:var(--accent); opacity:.55; border-radius:2px;}
+  td.name{position:relative;}
+  .tag.hit{color:var(--win); border-color:#34d39940; background:#34d39912;}
+  .tag.assist{color:var(--accent-bright); border-color:var(--accent-line); background:var(--accent-soft);}
+  .tag.loss{color:var(--loss); border-color:#f8717140; background:#f8717112;}
+  .tag.defend_lost{color:var(--amber); border-color:#fbbf2440; background:#fbbf2412;}
+  .tag.okay{color:var(--win); border-color:#34d39940; background:#34d39912;}
+  .tag.hospital{color:var(--hosp); border-color:#38bdf840; background:#38bdf812;}
+  .tag.travel{color:var(--neutral);}
+  .tag.soon{color:var(--amber); border-color:#fbbf2466; background:#fbbf241a;}
+  .dotst{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; vertical-align:middle; background:var(--text-faint);}
+  .dotst.Online{background:var(--win); box-shadow:0 0 0 3px #34d39922;} .dotst.Idle{background:var(--amber);} .dotst.Offline{background:var(--text-faint);}
+  .idle-ok{color:var(--win);} .idle-warn{color:var(--amber);} .idle-cold{color:var(--loss);}
+
+  .subcard{margin-top:18px; padding:16px; border:1px solid var(--border-soft); border-radius:12px; background:var(--bg-2);}
+  .subcard h3{margin:0 0 4px; font-size:13px; font-weight:600;}
+  .subcard .notefoot{margin-top:6px;}
+  .payrow{display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-top:12px;}
+  .payrow label{display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--text-dim);}
+  .payrow input[type=text]{width:110px;}
+  input[type=file]{font-family:inherit; font-size:12.5px; color:var(--text-dim); max-width:100%;}
+  input[type=file]::file-selector-button{
+    height:32px; padding:0 12px; margin-right:10px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel-2); color:var(--text); font:600 12px 'Inter', sans-serif; cursor:pointer;
+  }
+  input[type=file]::file-selector-button:hover{background:var(--panel-3);}
+  .quickstart{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:16px;}
+  .quickstart span{font-size:12px; color:var(--text-dim); padding:6px 11px; border-radius:999px; border:1px solid var(--border); background:var(--panel);}
+  .quickstart b{color:var(--accent-bright); margin-right:6px; font-family:var(--mono);}
+  @media (max-width:640px){ .sval{font-size:24px;} }
 </style>
 </head>
 <body>
+
+<nav class="suitebar"><div class="suitebar-in">
+  <a class="suite-brand" href="index.html"><span class="suite-mark"><svg class="i" viewBox="0 0 24 24"><path d="M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z"/><circle cx="12" cy="12" r="2.6"/></svg></span><span class="txt">Torn Command</span></a>
+  <div class="suite-links">
+    <a href="HitFeed_Solo.html" style="--pip:#9d7bff"><span class="pip"></span>Hitfeed Solo</a>
+    <a href="HitFeed_Command.html" class="on" aria-current="page" style="--pip:#6b7bff"><span class="pip"></span>Hitfeed Command</a>
+    <a href="ChainFeed_Command.html" style="--pip:#f5b42a"><span class="pip"></span>Chainfeed</a>
+  </div>
+</div></nav>
+
 <div class="wrap">
 
-<header>
-  <div class="logo">HF</div>
+<header class="prod">
+  <div class="prod-icon"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg></div>
   <div>
-    <h1>Hitfeed</h1>
-    <div class="sub">Torn war command</div>
+    <h1>Hitfeed <span class="edition">Command</span></h1>
+    <div class="sub">Faction-wide ranked war board, leaderboard and payout reports</div>
   </div>
   <div class="badges">
     <span class="badge mode" id="modeBadge">No key</span>
@@ -198,28 +365,37 @@
   </div>
 </header>
 
-<section class="panel">
-  <h2>Setup</h2>
-  <div class="grid">
-    <label class="field"><span>API key</span><input type="password" id="apiKey" placeholder="your Torn API key" autocomplete="off"></label>
-    <label class="field"><span>Your faction ID</span><input type="text" id="myFaction" placeholder="auto"></label>
-    <label class="field"><span>Enemy faction ID</span><input type="text" id="enemyFaction" placeholder="auto"></label>
-    <label class="field"><span>War start</span><input type="datetime-local" id="warStart"></label>
-    <label class="field"><span>War end (blank = now)</span><input type="datetime-local" id="warEnd"></label>
-    <label class="field"><span>Armoury: days before start</span><input type="text" id="armouryLookback" placeholder="3"></label>
-    <label class="field"><span>War end (blank = ongoing)</span><input type="datetime-local" id="warEnd"></label>
-  </div>
-  <div class="btnrow">
-    <button class="primary" id="fetchBtn">Fetch hits</button>
-    <button id="detectBtn">Find current war</button>
-    <button id="lastWarBtn">Load last war</button>
-    <button id="saveBtn">Save setup</button>
-    <label class="checkline"><input type="checkbox" id="warOnly" checked> War hits only</label>
-    <label class="checkline"><input type="checkbox" id="autoRefresh"> Auto-refresh (60s)</label>
-    <label class="checkline"><input type="checkbox" id="tct" checked> Show times in TCT</label>
-    <label class="checkline"><input type="checkbox" id="saveKey"> Remember key on this device</label>
-  </div>
-  <div class="status" id="statusMsg">Enter a key and press Fetch hits. Hitfeed reads whatever that key can reach — a faction key unlocks the whole roster, a personal key shows your own hits.</div>
+<section class="panel setup">
+  <details id="setupBox" open>
+    <summary>
+      <span class="panel-title">Setup</span>
+      <span class="summary-hint">API key, factions and war window</span>
+      <span class="chev"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M6 9l6 6 6-6"/></svg></span>
+    </summary>
+    <div class="setup-body">
+      <div class="grid">
+        <label class="field"><span>API key</span><input type="password" id="apiKey" placeholder="your Torn API key" autocomplete="off"></label>
+        <label class="field"><span>Your faction ID</span><input type="text" id="myFaction" placeholder="auto"></label>
+        <label class="field"><span>Enemy faction ID</span><input type="text" id="enemyFaction" placeholder="auto"></label>
+        <label class="field"><span>War start</span><input type="datetime-local" id="warStart"></label>
+        <label class="field"><span>War end (blank = now)</span><input type="datetime-local" id="warEnd"></label>
+        <label class="field"><span>Armoury: days before start</span><input type="text" id="armouryLookback" placeholder="3"></label>
+      </div>
+      <div class="btnrow">
+        <button class="primary" id="fetchBtn">Fetch hits</button>
+        <button id="detectBtn">Find current war</button>
+        <button id="lastWarBtn">Load last war</button>
+        <button id="saveBtn">Save setup</button>
+      </div>
+      <div class="toggles">
+        <label class="checkline"><input type="checkbox" id="warOnly" checked> War hits only</label>
+        <label class="checkline"><input type="checkbox" id="autoRefresh"> Auto-refresh (60s)</label>
+        <label class="checkline"><input type="checkbox" id="tct" checked> Times in TCT</label>
+        <label class="checkline"><input type="checkbox" id="saveKey"> Remember key on this device</label>
+      </div>
+    </div>
+  </details>
+  <div class="status" id="statusMsg">Enter a key and press Find current war. Hitfeed reads whatever that key can reach — a Limited key with faction API access unlocks the whole roster, a personal key shows your own hits.</div>
   <div class="hint" id="capHint"></div>
 </section>
 
@@ -240,19 +416,22 @@
     <div class="track" id="track">
       <div class="fill-us" id="fillUs" style="width:0%"></div>
       <div class="fill-them" id="fillThem" style="width:0%"></div>
-      <div class="target-mark" id="targetMark" style="display:none;"></div>
     </div>
-    <div class="target-lab" id="targetLab" style="display:none;"></div>
+    <div class="leadhead"><span id="leadLab">Lead toward target</span><span id="leadPct"></span></div>
+    <div class="leadtrack"><div class="leadfill" id="leadFill" style="width:0%"></div></div>
     <div class="scorefoot">
       <div>Lead <b id="leadVal">—</b></div>
       <div>Target <b id="targetVal">—</b></div>
-      <div>Our rate <b id="rateVal">—</b> pts/hr</div>
+      <div>Lead still needed <b id="needVal">—</b></div>
+      <div>Our rate (pts/hr) <b id="rateVal">—</b></div>
+      <div>Lead rate (/hr) <b id="leadRateVal">—</b></div>
       <div>Est. finish <b id="etaVal">—</b></div>
     </div>
+    <div class="hint">A ranked war ends when either side's <b>lead</b> reaches the target. The target drops over time once the war has run long enough, so the estimate is re-worked on every refresh.</div>
   </div>
 
   <div class="stats" id="statsGrid" style="display:none;">
-    <div class="stat accent"><div class="v" id="statMembers">0</div><div class="l">Active</div></div>
+    <div class="stat accent"><div class="v" id="statMembers">0</div><div class="l">Active members</div></div>
     <div class="stat win"><div class="v" id="statHits">0</div><div class="l">Hits</div></div>
     <div class="stat"><div class="v" id="statAssists">0</div><div class="l">Assists</div></div>
     <div class="stat loss"><div class="v" id="statLosses">0</div><div class="l">Losses</div></div>
@@ -268,7 +447,10 @@
     <div class="sparkaxis"><span id="sparkFrom"></span><span id="sparkTo">now</span></div>
   </div>
 
-  <div class="empty" id="emptyOverview">Nothing loaded yet. Press Fetch hits.</div>
+  <div class="empty" id="emptyOverview">
+    Nothing loaded yet.
+    <div class="quickstart"><span><b>1</b>Paste your API key</span><span><b>2</b>Find current war</span><span><b>3</b>Check the Faction tab</span></div>
+  </div>
 </section>
 
 <section class="view" id="view-roster">
@@ -290,6 +472,7 @@
           <th class="num sortable" data-key="assists">Assists</th>
           <th class="num sortable" data-key="losses">Losses</th>
           <th class="num sortable" data-key="taken">Taken</th>
+          <th class="num sortable" data-key="shares" title="Payout shares from the weights below">Shares</th>
           <th class="num sortable" data-key="respect">Respect</th>
           <th class="num sortable" data-key="ff">Avg FF</th>
           <th class="num sortable" data-key="last">Last hit</th>
@@ -305,16 +488,29 @@
         <button class="small primary" id="exportWarReport" disabled title="Leadership only — needs a faction-access key">War Report</button>
       </span>
     </div>
-    <div class="filterrow" style="margin-top:12px;">
-      <label class="checkline" style="cursor:pointer;">
-        <input type="file" id="masterFile" accept=".xlsx,.xlsm" style="max-width:230px; font-family:inherit;">
-      </label>
-      <button class="small" id="clearMaster" style="display:none;">Clear</button>
-    </div>
-    <div class="notefoot" id="masterInfo">Optional: upload your running war-report doc and the new report is added as a fresh tab (after the Blank tab, newest first), then the whole document is saved back.</div>
     <div class="notefoot" id="rosterNote"></div>
+
+    <div class="subcard">
+      <h3>Payout shares</h3>
+      <div class="notefoot">These become editable cells in the War Report, so you can still tweak them in Excel afterwards. Saved with Save setup.</div>
+      <div class="payrow">
+        <label>Per hit <input type="text" id="wHit" placeholder="2"></label>
+        <label>Per assist <input type="text" id="wAssist" placeholder="1"></label>
+        <label>Minus per loss <input type="text" id="wLoss" placeholder="0"></label>
+        <label>Min hits to be paid <input type="text" id="wMinHits" placeholder="0"></label>
+      </div>
+    </div>
+
+    <div class="subcard">
+      <h3>War report ledger</h3>
+      <div class="notefoot" id="masterInfo">Optional: upload your running war-report doc and the new report is added as a fresh tab (after the Blank tab, newest first), then the whole document is saved back.</div>
+      <div class="filterrow" style="margin:12px 0 0;">
+        <input type="file" id="masterFile" accept=".xlsx,.xlsm">
+        <button class="small" id="clearMaster" style="display:none;">Clear</button>
+      </div>
+    </div>
   </div>
-  <div class="empty" id="emptyRoster">No faction data. This view needs a key with faction API access.</div>
+  <div class="empty" id="emptyRoster">No faction data yet. This view needs a key with faction API access.</div>
 </section>
 
 <section class="view" id="view-feed">
@@ -333,7 +529,7 @@
       <button class="small" id="exportFeedCsv">Export CSV</button>
     </div>
     <div class="notefoot">
-      Hospitalize, Mug and Leave aren't in the attack record — they're resolved by matching your personal event log against each hit's target and timestamp. A hit with no matching log entry shows as a plain Hit. This only ever works for the key entered above, so on the faction board every other member's hits stay uncategorised.
+      Hospitalize, Mug and Leave come straight from each attack's result, so they're filled in for every member on the faction board too.
     </div>
   </div>
 </section>
@@ -352,6 +548,7 @@
           <th class="sortable" data-tkey="name">Name</th>
           <th class="num sortable" data-tkey="level">Level</th>
           <th class="sortable" data-tkey="until">Status</th>
+          <th class="sortable" data-tkey="online">Online</th>
           <th class="num sortable" data-tkey="lastAction">Last action</th>
           <th>Attack</th>
         </tr></thead>
@@ -359,28 +556,31 @@
       </table>
     </div>
     <div class="tblfoot"><span class="count" id="targetCount"></span></div>
-    <div class="notefoot">Pulled from the enemy faction's public profile, so it works on any key. Hospital timers count down live; the list re-sorts as people come out.</div>
+    <div class="notefoot">Pulled from the enemy faction's public profile, so it works on any key. Hospital timers count down live; the list re-sorts as people come out, and anyone out within 2 minutes is highlighted amber. With auto-refresh on, this roster is re-pulled every minute too.</div>
   </div>
   <div class="empty" id="emptyTargets">Set an enemy faction ID, then press Refresh roster.</div>
 </section>
 
-<footer>
-  Requests go straight from this page to api.torn.com with the key you type in. Nothing is sent anywhere else, and nothing is stored off this device.
-</footer>
 </div>
+
+<footer class="suitefoot">
+  <span class="lock"><svg class="i" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>Your key only ever talks to api.torn.com — nothing is sent or stored anywhere else.</span>
+  <span><a href="index.html">Torn Command</a> · Hitfeed Command</span>
+</footer>
 
 <script>
 const $ = id => document.getElementById(id);
 const S = {
   attacks: [],
   personal: [],
-  outcomes: {},
   armoury: {},
+  armourySeen: new Set(),
   roster: {},
   donators: {},
   masterWb: null,
   masterName: null,
-  logDenied: false,
+  busy: false,
+  truncated: false,
   members: [],
   feedRows: [],
   targets: [],
@@ -405,15 +605,21 @@ function fmtTime(ts){
     ? d.toLocaleString('en-GB', {timeZone:'UTC', hour12:false}).replace(',','') + ' TCT'
     : d.toLocaleString();
 }
-function toEpoch(v){
+function toEpoch(v, tct = useTct()){
   if(!v) return null;
-  return Math.floor(new Date(useTct() ? v + 'Z' : v).getTime()/1000);
+  const ms = new Date(tct ? v + 'Z' : v).getTime();
+  return isNaN(ms) ? null : Math.floor(ms/1000);
 }
-function fromEpoch(ts){
+function fromEpoch(ts, tct = useTct()){
   const d = new Date(ts*1000);
-  if(useTct()) return d.toISOString().slice(0,16);
+  if(tct) return d.toISOString().slice(0,16);
   const off = d.getTimezoneOffset()*60000;
   return new Date(ts*1000 - off).toISOString().slice(0,16);
+}
+// End of the period being looked at: the war end if it has finished, otherwise now.
+function refEnd(){
+  const e = toEpoch($('warEnd').value) || (S.war && S.war.end) || 0;
+  return e ? Math.min(e, now()) : now();
 }
 function dur(secs){
   if(secs == null) return '—';
@@ -516,8 +722,8 @@ async function detectCaps(){
   $('capHint').textContent = caps.faction
     ? 'Faction access confirmed — the whole roster is visible.'
     : caps.personal
-      ? 'This key reads your own hits only. For the faction leaderboard, ask a leader to grant API access and use a full-access key.'
-      : 'This key cannot read attack data. Create a full-access key at Settings → API Key on torn.com.';
+      ? 'This key reads your own hits only. For the faction leaderboard you need a Limited key plus the faction "API Access" permission from a leader.'
+      : 'This key cannot read attack data. Create a Limited access key at Settings → API Key on torn.com.';
   return caps;
 }
 
@@ -537,7 +743,7 @@ async function getWars(){
 async function findWar(mode){
   if(!$('myFaction').value.trim()) await detectMyFaction();
   const myId = $('myFaction').value.trim();
-  const {wars, source} = await getWars();
+  const {wars} = await getWars();
   const mine = Object.entries(wars)
     .filter(([,w]) => Object.keys(w.factions||{}).includes(String(myId)));
   const pick = mode === 'last'
@@ -563,10 +769,17 @@ async function refreshWarScore(){
   if(!myId) return;
   try{
     const {wars} = await getWars();
-    const found = Object.values(wars).find(w => {
+    // Several wars can match (e.g. a rematch against the same enemy) — prefer the one
+    // starting closest to the War start field, otherwise the most recent.
+    const wantStart = toEpoch($('warStart').value);
+    const matches = Object.values(wars).filter(w => {
       const ids = Object.keys(w.factions||{});
-      return ids.includes(String(myId)) && (!enemyId || ids.includes(String(enemyId)));
+      return w.war && ids.includes(String(myId)) && (!enemyId || ids.includes(String(enemyId)));
     });
+    matches.sort((a,b) => wantStart
+      ? Math.abs(a.war.start - wantStart) - Math.abs(b.war.start - wantStart)
+      : b.war.start - a.war.start);
+    const found = matches[0];
     if(!found) return;
     const ids = Object.keys(found.factions);
     const them = ids.find(i => i !== String(myId)) || ids[0];
@@ -580,55 +793,28 @@ async function refreshWarScore(){
 async function pageAttacks(base, fromTs, toTs, onProgress){
   const upper = toTs || now();
   let from = fromTs;
-  const all = [], seen = new Set(), pages = [];
-  for(let page = 1; page <= 120; page++){
+  const all = [], seen = new Set();
+  const MAX_PAGES = 250;
+  for(let page = 1; page <= MAX_PAGES; page++){
     const data = await apiCall(base, 'attacks', {from, to: upper});
     const list = Object.entries(data.attacks || {}).map(([id,a]) => ({id, ...a}));
-    if(!list.length){ pages.push({page, got:0, fresh:0}); break; }
+    if(!list.length) break;
     list.sort((a,b) => a.timestamp_started - b.timestamp_started);
     let fresh = 0;
     for(const a of list) if(!seen.has(a.id)){ seen.add(a.id); all.push(a); fresh++; }
     const maxTs = list[list.length-1].timestamp_started;
-    pages.push({page, got:list.length, fresh, upTo: fmtTime(maxTs)});
     if(onProgress) onProgress(page, all.length, maxTs);
     if(fresh === 0 || maxTs >= upper || maxTs <= from) break;
+    if(page === MAX_PAGES) S.truncated = true;
     from = maxTs;
   }
   return all;
 }
-async function fetchOutcomes(fromTs, toTs){
-  const map = {};
-  let to = toTs || now();
-  for(let page = 0; page < 25; page++){
-    let data;
-    try{ data = await apiCall('user','log',{from: fromTs, to}); }
-    catch(e){ if(page === 0 && e.code === 16) S.logDenied = true; break; }
-    const entries = Object.values(data.log || {});
-    if(!entries.length) break;
-    entries.sort((a,b) => b.timestamp - a.timestamp);
-    for(const e of entries){
-      const t = ((e.title || '') + ' ' + (e.category || '')).toLowerCase();
-      let kind = null;
-      if(t.includes('hospitalize') || t.includes('hospitalise')) kind = 'hospitalize';
-      else if(t.includes('mug')) kind = 'mug';
-      else if(t.includes('leave')) kind = 'leave';
-      if(!kind) continue;
-      const d = e.data || {};
-      const defId = d.defender || d.defender_id || d.target || d.victim;
-      if(defId) map[`${defId}_${e.timestamp}`] = kind;
-    }
-    const oldest = entries[entries.length-1].timestamp;
-    if(oldest <= fromTs || oldest >= to) break;
-    to = oldest;
-  }
-  return map;
-}
 
-async function fetchArmouryUsage(fromTs, toTs, onProgress){
-  const usage = {};
+// Pass the previous usage map + seen-ID set to top up incrementally without double counting.
+async function fetchArmouryUsage(fromTs, toTs, onProgress, usage = {}, seen = new Set()){
   const upper = toTs || now();
   let from = fromTs;
-  const seen = new Set();
   for(let page = 0; page < 200; page++){
     let data;
     try{ data = await apiCall('faction','armorynews',{from, to: upper, sort:'asc'}); }
@@ -654,14 +840,20 @@ async function fetchArmouryUsage(fromTs, toTs, onProgress){
       const rec = usage[mid] || (usage[mid] = {xan:0, deposited:0, withdrawn:0, points:0, refills:0, name: nameMatch ? nameMatch[1] : ('#'+mid)});
       const isWithdrawal = /to themselves from the faction arm/.test(low);
       const isDeposit    = /deposited/.test(low);
-      const isDirectUse  = /used one of the faction'?s/.test(low);
-      const qm = low.match(/deposited\s+(\d+)\s*x/) || low.match(/gave\s+(\d+)\s*x/) || low.match(/used\s+(\d+)\b/) || low.match(/(\d+)\s*x\b/);
-      const q = qm ? parseInt(qm[1], 10) : 1;
+      const isDirectUse  = /used .+ of the faction'?s/.test(low);
+      const stockQ = low.match(/deposited\s+(\d+)\s*x/) || low.match(/gave\s+(\d+)\s*x/) || low.match(/(\d+)\s*x\b/);
+      const q = stockQ ? parseInt(stockQ[1], 10) : 1;
       if(isWithdrawal){ if(isXan) rec.withdrawn += q; continue; }
       if(isDeposit){ if(isXan) rec.deposited += q; continue; }
       if(!isDirectUse) continue;
-      if(isXan){ rec.xan += q; }
-      if(isRef){ rec.refills += q; rec.points += q*30; }
+      if(isRef){
+        rec.refills += 1;
+        const pm = low.match(/used\s+(\d+)\s+of the faction'?s points/);
+        rec.points += pm ? parseInt(pm[1], 10) : 30;
+      }else if(isXan){
+        const xm = low.match(/used\s+(\d+)\s+of the faction'?s/);
+        rec.xan += xm ? parseInt(xm[1], 10) : 1;
+      }
     }
     if(onProgress) onProgress(page+1, Object.keys(usage).length);
     if(fresh === 0 || newest >= upper || newest <= from) break;
@@ -678,7 +870,7 @@ async function fetchDonatorStatus(ids, onProgress){
     try{
       const d = await apiCall(`user/${id}`, 'profile');
       const icons = d.icons || {};
-      S.donators[id] = Object.values(icons).some(v => /donator|subscriber/i.test(String(v)));
+      S.donators[id] = Number(d.donator) === 1 || Object.values(icons).some(v => /donator|subscriber/i.test(String(v)));
     }catch(e){
       S.donators[id] = false;
       if(e.code === 16 || e.code === 7) denied = true;
@@ -688,14 +880,9 @@ async function fetchDonatorStatus(ids, onProgress){
   }
   return S.donators;
 }
-function outcomeFor(targetId, a){
-  const m = S.outcomes;
-  for(let t = a.timestamp_started; t <= (a.timestamp_ended || a.timestamp_started) + 2; t++){
-    const hit = m[`${targetId}_${t}`];
-    if(hit) return hit;
-  }
-  return null;
-}
+// The attack result already says how the hit was finished: Attacked = left them.
+const OUTCOME = {Hospitalized:'hospitalize', Mugged:'mug', Attacked:'leave'};
+const outcomeOf = a => OUTCOME[a.result] || null;
 
 const WIN = ['Attacked','Hospitalized','Mugged','Left','Leave','Arrested','Special','Looted'];
 const LOSS = ['Lost','Stalemate','Timeout','Escape','Interrupted'];
@@ -724,6 +911,17 @@ function categorize(a, mine, enemy, warOnly){
   }
   return null;
 }
+function readNum(id, dflt){
+  const v = parseFloat($(id).value);
+  return isNaN(v) ? dflt : v;
+}
+function payWeights(){
+  return {hit: readNum('wHit', 2), assist: readNum('wAssist', 1), loss: readNum('wLoss', 0), minHits: readNum('wMinHits', 0)};
+}
+function sharesFor(m, w){
+  if((m.hits||0) < w.minHits) return 0;
+  return Math.max(0, (m.hits||0)*w.hit + (m.assists||0)*w.assist - (m.losses||0)*w.loss);
+}
 const ff = a => (a.modifiers && a.modifiers.fair_fight) || null;
 const resp = a => a.respect_gain || a.respect || 0;
 
@@ -732,6 +930,7 @@ function build(){
   const enemy = $('enemyFaction').value.trim();
   const warOnly = $('warOnly').checked;
   const ownId = S.ownId;
+  const weights = payWeights();
 
   const blank = (id, name) => ({id, name: name || ('#'+id), hits:0, hosp:0, mug:0, leave:0,
                                 assists:0, losses:0, taken:0, respect:0, ffSum:0, ffN:0, last:0});
@@ -755,12 +954,10 @@ function build(){
       m.hits++; m.respect += resp(a);
       const f = ff(a); if(f){ m.ffSum += f; m.ffN++; }
       m.last = Math.max(m.last, a.timestamp_started);
-      if(ownId && String(id) === String(ownId)){
-        const o = outcomeFor(a.defender_id, a);
-        if(o === 'hospitalize') m.hosp++;
-        if(o === 'mug') m.mug++;
-        if(o === 'leave') m.leave++;
-      }
+      const o = outcomeOf(a);
+      if(o === 'hospitalize') m.hosp++;
+      if(o === 'mug') m.mug++;
+      if(o === 'leave') m.leave++;
     }
     if(cat === 'assist'){ m.assists++; m.last = Math.max(m.last, a.timestamp_started); }
     if(cat === 'loss') m.losses++;
@@ -770,7 +967,7 @@ function build(){
   for(const [id, r] of Object.entries(S.armoury || {})){
     if(!byMember[id]) byMember[id] = blank(id, r.name);
   }
-  S.members = Object.values(byMember).map(m => ({...m, ff: m.ffN ? m.ffSum/m.ffN : 0}));
+  S.members = Object.values(byMember).map(m => ({...m, ff: m.ffN ? m.ffSum/m.ffN : 0, shares: sharesFor(m, weights)}));
 
   const rows = [];
   for(const a of (S.personal.length ? S.personal : S.attacks)){
@@ -783,7 +980,7 @@ function build(){
       ts: a.timestamp_started, targetId,
       target: isAtk ? a.defender_name : a.attacker_name,
       targetFaction: (isAtk ? a.defender_factionname : a.attacker_factionname) || '—',
-      cat, outcome: cat === 'hit' ? outcomeFor(targetId, a) : null,
+      cat, outcome: cat === 'hit' ? outcomeOf(a) : null,
       result: a.result, respect: resp(a), ff: ff(a)
     });
   }
@@ -812,13 +1009,14 @@ function renderOverview(){
     const cat = categorize(a, $('myFaction').value.trim(), $('enemyFaction').value.trim(), $('warOnly').checked);
     if(cat === 'hit') stamps.push(a.timestamp_started);
   }
-  const start = toEpoch($('warStart').value) || (stamps.length ? Math.min(...stamps) : now());
-  const hrs = Math.max((now() - start)/3600, 0.1);
+  const end = refEnd();
+  const start = toEpoch($('warStart').value) || (stamps.length ? Math.min(...stamps) : end);
+  const hrs = Math.max((end - start)/3600, 0.1);
   $('statRate').textContent = (tot.hits/hrs).toFixed(1);
-  $('statRecent').textContent = stamps.filter(t => t > now()-900).length;
+  $('statRecent').textContent = stamps.filter(t => t > end-900 && t <= end).length;
 
   const buckets = new Array(24).fill(0);
-  const base = now() - 24*600;
+  const base = end - 24*600;
   for(const t of stamps){
     const i = Math.floor((t - base)/600);
     if(i >= 0 && i < 24) buckets[i]++;
@@ -827,6 +1025,7 @@ function renderOverview(){
   $('spark').innerHTML = buckets.map(v =>
     `<div class="${v?'':'quiet'}" style="height:${Math.max(2,(v/peak)*100)}%" title="${v} hits"></div>`).join('');
   $('sparkFrom').textContent = fmtTime(base);
+  $('sparkTo').textContent = end < now() - 60 ? fmtTime(end) : 'now';
   $('sparkPanel').style.display = stamps.length ? 'block' : 'none';
 
   if(S.war && S.war.us){
@@ -835,25 +1034,37 @@ function renderOverview(){
     $('themName').textContent = S.war.them.name || 'Them';
     $('usScore').textContent = us.toLocaleString();
     $('themScore').textContent = them.toLocaleString();
-    const span = Math.max(target * 1.05, us, them, 1);
+    const span = Math.max(us, them, 1);
     $('fillUs').style.width = (us/span*50) + '%';
     $('fillThem').style.width = (them/span*50) + '%';
-    if(target){
-      $('targetMark').style.display = 'block';
-      $('targetMark').style.left = (target/span*50) + '%';
-      $('targetLab').style.display = 'block';
-      $('targetLab').style.left = (target/span*50) + '%';
-      $('targetLab').textContent = 'target ' + target.toLocaleString();
-      $('targetVal').textContent = target.toLocaleString();
-    }
+
+    // The war is decided by the lead, not by either side's score.
     const lead = us - them;
     const le = $('leadVal');
     le.textContent = (lead>0?'+':'') + lead.toLocaleString();
     le.style.color = lead > 0 ? 'var(--win)' : lead < 0 ? 'var(--loss)' : 'var(--text)';
-    const ptsPerHr = us / Math.max((now()-S.war.start)/3600, 0.1);
+    $('targetVal').textContent = target ? target.toLocaleString() : '—';
+    const pct = target ? Math.min(Math.abs(lead)/target, 1) : 0;
+    $('leadFill').style.width = (pct*100) + '%';
+    $('leadFill').classList.toggle('behind', lead < 0);
+    $('leadLab').textContent = lead < 0 ? `${S.war.them.name || 'Enemy'} lead toward target` : 'Our lead toward target';
+    $('leadPct').textContent = target ? (pct*100).toFixed(1) + '%' : '';
+
+    const warEnd = S.war.end ? Math.min(S.war.end, now()) : now();
+    const warHrs = Math.max((warEnd - S.war.start)/3600, 0.1);
+    const ptsPerHr = us / warHrs;
+    const leadPerHr = lead / warHrs;
     $('rateVal').textContent = ptsPerHr.toFixed(0);
-    const remain = target ? Math.max(target-us,0) : 0;
-    $('etaVal').textContent = !target ? '—' : remain === 0 ? 'target reached' : ptsPerHr > 0 ? dur(remain/ptsPerHr*3600) : '—';
+    $('leadRateVal').textContent = (leadPerHr>0?'+':'') + leadPerHr.toFixed(0);
+    const need = target ? Math.max(target - Math.abs(lead), 0) : 0;
+    $('needVal').textContent = target ? need.toLocaleString() : '—';
+    let eta = '—';
+    if(S.war.end) eta = 'war over';
+    else if(target && need === 0) eta = 'target reached';
+    else if(target && lead !== 0 && Math.abs(leadPerHr) > 0){
+      eta = dur(need/Math.abs(leadPerHr)*3600) + (lead < 0 ? ' (enemy win)' : '');
+    }
+    $('etaVal').textContent = eta;
     $('scorePanel').style.display = 'block';
   }
   const any = S.attacks.length || S.personal.length;
@@ -879,7 +1090,7 @@ function renderRoster(){
       <td class="name"><a class="plink" href="https://www.torn.com/profiles.php?XID=${m.id}" target="_blank" rel="noopener">${esc(m.name)}</a>${k==='hits'?`<div class="bar" style="width:${(m.hits/maxHits*100).toFixed(0)}%"></div>`:''}</td>
       <td class="num">${m.hits}</td><td class="num">${m.hosp||'—'}</td><td class="num">${m.mug||'—'}</td>
       <td class="num">${m.leave||'—'}</td><td class="num">${m.assists||'—'}</td><td class="num">${m.losses||'—'}</td>
-      <td class="num">${m.taken||'—'}</td><td class="num">${m.respect.toFixed(1)}</td>
+      <td class="num">${m.taken||'—'}</td><td class="num">${m.shares ? +m.shares.toFixed(2) : '—'}</td><td class="num">${m.respect.toFixed(1)}</td>
       <td class="num">${m.ff ? m.ff.toFixed(2) : '—'}</td>
       <td class="num ${cls}">${idle == null ? '—' : dur(idle)}</td>
     </tr>`;
@@ -887,7 +1098,7 @@ function renderRoster(){
   $('rosterCount').textContent = `${list.length} members`;
   $('emptyRoster').style.display = S.members.length ? 'none' : 'block';
   $('rosterNote').textContent = S.caps.faction
-    ? 'Hits, assists, losses, hits taken and respect come from faction → attacks. Hosp / Mug / Leave can only be resolved for the key running this tool.'
+    ? 'Everything here comes from faction → attacks. Hosp / Mug / Leave are read from each attack\'s result (Attacked = Leave).'
     : 'Faction-wide data needs a key with faction API access — this board is showing only what your own key can see.';
   document.querySelectorAll('#rosterTable thead th').forEach(th =>
     th.classList.toggle('sorted', th.dataset.key === S.sortKey));
@@ -908,10 +1119,10 @@ function renderFeed(){
   $('feedCount').textContent = `${rows.length} entries${rows.length>400 ? ' (showing latest 400)' : ''}`;
 }
 
-async function loadTargets(){
+async function loadTargets(quiet){
   const id = $('enemyFaction').value.trim();
-  if(!id){ setStatus('Set an enemy faction ID first.', 'err'); return; }
-  setStatus('Loading enemy roster...', '');
+  if(!id){ if(!quiet) setStatus('Set an enemy faction ID first.', 'err'); return; }
+  if(!quiet) setStatus('Loading enemy roster...', '');
   try{
     const d = await apiCall(`faction/${id}`, 'basic');
     S.targets = Object.entries(d.members || {}).map(([mid, m]) => ({
@@ -919,11 +1130,12 @@ async function loadTargets(){
       state: (m.status && m.status.state) || 'Unknown',
       desc: (m.status && m.status.description) || '',
       until: (m.status && m.status.until) || 0,
+      online: (m.last_action && m.last_action.status) || '',
       lastAction: (m.last_action && m.last_action.timestamp) || 0
     }));
     renderTargets();
-    setStatus(`Enemy roster loaded — ${S.targets.length} members.`, 'ok');
-  }catch(e){ setStatus(e.message, 'err'); }
+    if(!quiet) setStatus(`Enemy roster loaded — ${S.targets.length} members.`, 'ok');
+  }catch(e){ if(!quiet) setStatus(e.message, 'err'); }
 }
 function renderTargets(){
   const f = $('targetFilter').value.trim().toLowerCase();
@@ -933,6 +1145,10 @@ function renderTargets(){
   const k = S.tSortKey;
   list.sort((a,b) => {
     if(k === 'name') return S.tSortDir * a.name.localeCompare(b.name);
+    if(k === 'online'){
+      const rank = {Offline:0, Idle:1, Online:2};
+      return S.tSortDir * ((rank[a.online] ?? 3) - (rank[b.online] ?? 3));
+    }
     if(k === 'until'){
       const av = a.state === 'Okay' ? 0 : (a.until || Infinity);
       const bv = b.state === 'Okay' ? 0 : (b.until || Infinity);
@@ -941,16 +1157,18 @@ function renderTargets(){
     return S.tSortDir * ((a[k]||0) - (b[k]||0));
   });
   $('targetBody').innerHTML = list.map(x => {
-    const cls = x.state === 'Okay' ? 'okay' : x.state === 'Hospital' ? 'hospital' : 'travel';
+    const soon = x.state === 'Hospital' && x.until && x.until - t <= 120;
+    const cls = x.state === 'Okay' ? 'okay' : soon ? 'soon' : x.state === 'Hospital' ? 'hospital' : 'travel';
     const left = x.until && x.until > t ? ` ${dur(x.until - t)}` : '';
     return `<tr>
       <td><a class="plink" href="https://www.torn.com/profiles.php?XID=${x.id}" target="_blank" rel="noopener">${esc(x.name)}</a></td>
       <td class="num">${x.level}</td>
       <td><span class="tag ${cls}">${esc(x.state)}${left}</span></td>
+      <td><span class="dotst ${esc(x.online)}"></span>${esc(x.online || '—')}</td>
       <td class="num">${x.lastAction ? dur(t - x.lastAction) : '—'}</td>
       <td><a class="plink" href="https://www.torn.com/loader.php?sid=attack&user2ID=${x.id}" target="_blank" rel="noopener">Attack</a></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="5" class="empty">Nobody matches that filter.</td></tr>';
+  }).join('') || '<tr><td colspan="6" class="empty">Nobody matches that filter.</td></tr>';
   $('targetCount').textContent = `${list.length} shown of ${S.targets.length}`;
   $('emptyTargets').style.display = S.targets.length ? 'none' : 'block';
   document.querySelectorAll('#targetTable thead th').forEach(th =>
@@ -958,6 +1176,10 @@ function renderTargets(){
 }
 
 async function doFetch(incremental){
+  // A full pull can take minutes; never let auto-refresh start a second one on top.
+  if(S.busy) return;
+  S.busy = true;
+  S.truncated = false;
   const btn = $('fetchBtn');
   btn.disabled = true;
   try{
@@ -977,17 +1199,23 @@ async function doFetch(incremental){
 
     const lookbackDays = Math.max(0, parseFloat($('armouryLookback').value) || 3);
     const armouryFrom = incremental && S.lastFetchTo ? from : Math.floor(warStart - lookbackDays*86400);
+    const topUp = incremental && S.lastFetchTo;
+    const windowOpen = from < to;
 
     if(S.caps.faction){
       setStatus('Pulling faction attack log...', '');
-      const fresh = await pageAttacks('faction', from, to,
-        (p, n) => setStatus(`Faction log — page ${p}, ${n} records...`, ''));
-      S.attacks = incremental ? mergeAttacks(S.attacks, fresh) : fresh;
+      const fresh = windowOpen ? await pageAttacks('faction', from, to,
+        (p, n) => setStatus(`Faction log — page ${p}, ${n} records...`, '')) : [];
+      S.attacks = topUp ? mergeAttacks(S.attacks, fresh) : fresh;
       try{ const rd = await apiCall('faction','basic'); if(rd.members) S.roster = rd.members; }catch(e){}
       try{
         setStatus('Reading faction armoury news for Xanax & refills...', '');
-        const u = await fetchArmouryUsage(armouryFrom, to, (p, n) => setStatus(`Armoury news — page ${p}, ${n} members...`, ''));
-        S.armoury = incremental ? mergeArmoury(S.armoury, u) : u;
+        if(!topUp){ S.armoury = {}; S.armourySeen = new Set(); }
+        // Top-ups add to the existing totals; the seen-ID set stops the overlap being counted twice.
+        if(armouryFrom < to){
+          await fetchArmouryUsage(armouryFrom, to, (p, n) => setStatus(`Armoury news — page ${p}, ${n} members...`, ''),
+                                  S.armoury, S.armourySeen);
+        }
         const refillers = Object.entries(S.armoury).filter(([,r]) => (r.refills||0) > 0).map(([id]) => id);
         if(refillers.length){
           setStatus(`Checking donator status for ${refillers.length} refill users...`, '');
@@ -998,29 +1226,26 @@ async function doFetch(incremental){
     if(S.caps.personal){
       try{
         setStatus('Pulling your own attack log...', '');
-        const fresh = await pageAttacks('user', from, to,
-          (p, n) => setStatus(`Your log — page ${p}, ${n} records...`, ''));
-        S.personal = incremental ? mergeAttacks(S.personal, fresh) : fresh;
+        const fresh = windowOpen ? await pageAttacks('user', from, to,
+          (p, n) => setStatus(`Your log — page ${p}, ${n} records...`, '')) : [];
+        S.personal = topUp ? mergeAttacks(S.personal, fresh) : fresh;
         if(!S.caps.faction) S.attacks = S.personal;
-        setStatus('Matching hit outcomes against your event log...', '');
-        S.logDenied = false;
-        const o = await fetchOutcomes(from, to);
-        S.outcomes = incremental ? {...S.outcomes, ...o} : o;
-      }catch(e){
-
-        if(e.code === 16) S.logDenied = true;
-      }
+      }catch(e){ }
     }
     S.lastFetchTo = now();
     await refreshWarScore();
     build();
     renderAll();
-    if(S.caps.faction && !S.targets.length && $('enemyFaction').value.trim()) loadTargets();
-    $('warStatus').textContent = 'Live · ' + fmtTime(S.lastFetchTo);
+    if($('enemyFaction').value.trim()){
+      if(!S.targets.length && S.caps.faction) loadTargets(true);
+      else if(S.targets.length && incremental) loadTargets(true);
+    }
+    const ended = S.war && S.war.end;
+    $('warStatus').textContent = (ended ? 'Finished war · updated ' : 'Live · ') + fmtTime(S.lastFetchTo);
     $('warStatus').classList.add('live');
     const n = S.attacks.length;
-    const note = S.logDenied
-      ? ' Hosp/Mug/Leave need a full-access key (your own event log) — everything else is from the faction log.'
+    const note = S.truncated
+      ? ' WARNING: hit the page limit — the oldest part of the war may be missing. Narrow the war start/end.'
       : '';
     let armNote = '';
     if(S.caps.faction){
@@ -1030,31 +1255,20 @@ async function doFetch(incremental){
       const users = recs.filter(r => (r.xan||0) || (r.refills||0)).length;
       armNote = ` Armoury: ${totXan} Xanax, ${totRef} refills across ${users} members.`;
     }
-    setStatus(`Loaded ${n} records, ${S.members.length} members. ${budget()} API calls in the last minute.${note}${armNote}`, 'ok');
+    setStatus(`Loaded ${n} records, ${S.members.length} members. ${budget()} API calls in the last minute.${note}${armNote}`, S.truncated ? 'warn' : 'ok');
     persist();
+    // On phones the setup form fills the screen — fold it away once there's data to look at.
+    if(!incremental && window.matchMedia('(max-width:760px)').matches) $('setupBox').open = false;
   }catch(e){
     setStatus(e.message, 'err');
   }finally{
     btn.disabled = false;
+    S.busy = false;
   }
 }
 function mergeAttacks(oldList, fresh){
   const seen = new Set(oldList.map(a => a.id));
   return oldList.concat(fresh.filter(a => !seen.has(a.id)));
-}
-function mergeArmoury(oldMap, fresh){
-
-  const out = {...oldMap};
-  for(const [id, r] of Object.entries(fresh)){
-    const p = out[id] || {xan:0, deposited:0, withdrawn:0, points:0, refills:0, name:r.name};
-    out[id] = {name: r.name || p.name,
-               xan: Math.max(p.xan||0, r.xan||0),
-               deposited: Math.max(p.deposited||0, r.deposited||0),
-               withdrawn: Math.max(p.withdrawn||0, r.withdrawn||0),
-               points: Math.max(p.points||0, r.points||0),
-               refills: Math.max(p.refills||0, r.refills||0)};
-  }
-  return out;
 }
 
 function download(name, blob){
@@ -1070,9 +1284,9 @@ function csv(rows, header){
 function exportRosterCsv(){
   if(!S.members.length) return setStatus('Nothing to export yet.', 'err');
   const rows = [...S.members].sort((a,b)=>b.hits-a.hits).map((m,i) =>
-    [i+1,m.name,m.hits,m.hosp,m.mug,m.leave,m.assists,m.losses,m.taken,m.respect.toFixed(2),m.ff?m.ff.toFixed(2):'',m.last?fmtTime(m.last):'']);
+    [i+1,m.name,m.hits,m.hosp,m.mug,m.leave,m.assists,m.losses,m.taken,+m.shares.toFixed(2),m.respect.toFixed(2),m.ff?m.ff.toFixed(2):'',m.last?fmtTime(m.last):'']);
   download(`hitfeed_leaderboard_${new Date().toISOString().slice(0,10)}.csv`,
-    new Blob([csv(rows, ['#','Member','Hits','Hosp','Mug','Leave','Assists','Losses','Taken','Respect','AvgFF','LastHit'])], {type:'text/csv'}));
+    new Blob([csv(rows, ['#','Member','Hits','Hosp','Mug','Leave','Assists','Losses','Taken','Shares','Respect','AvgFF','LastHit'])], {type:'text/csv'}));
 }
 function exportRosterXlsx(){
   if(typeof XLSX === 'undefined') return setStatus('Excel export needs the SheetJS library, which did not load. CSV still works.', 'err');
@@ -1080,7 +1294,7 @@ function exportRosterXlsx(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([...S.members].sort((a,b)=>b.hits-a.hits).map((m,i)=>({
     Rank:i+1, Member:m.name, Hits:m.hits, Hosp:m.hosp, Mug:m.mug, Leave:m.leave,
-    Assists:m.assists, Losses:m.losses, Taken:m.taken, Respect:+m.respect.toFixed(2),
+    Assists:m.assists, Losses:m.losses, Taken:m.taken, Shares:+m.shares.toFixed(2), Respect:+m.respect.toFixed(2),
     AvgFF:m.ff?+m.ff.toFixed(2):'', LastHit:m.last?fmtTime(m.last):''
   }))), 'Leaderboard');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(S.feedRows.map(r=>({
@@ -1114,7 +1328,8 @@ function generateWarReport(){
   const f = (formula, z, v) => ({t:'n', f: formula, z: z||'#,##0', v: v == null ? 0 : v});
   const YELLOW = {fill:{patternType:'solid', fgColor:{rgb:'FFF2CC'}}};
   const ynum = (v, z) => ({t:'n', v, z: z||'#,##0', s: YELLOW});
-  const PPP = 0, XP = XAN_PRICE, PP = POINT_PRICE, EPHv = 25, EPRDv = 150, EPRRv = 100;
+  const PPP = 0, XP = XAN_PRICE, PP = POINT_PRICE, EPHv = 25, EPRDv = 150, EPRRv = 100, EXANv = 250;
+  const W = payWeights();
 
   const headers = ['Member Pay','Member','Total Shares','Xan Taken','Xan Returned','Rep Gained','War Hits',
                    'Assists','Points Used','E Created','E Used','Difference','Losses','Hits Taken'];
@@ -1124,7 +1339,8 @@ function generateWarReport(){
   const first = 2, last = 1 + members.length;
   const priceRow = last + 5;
   const EPH = `$B$${priceRow+2}`;
-  const EPRD = `$B$${priceRow+3}`, EPRR = `$B$${priceRow+4}`;
+  const EPRD = `$B$${priceRow+3}`, EPRR = `$B$${priceRow+4}`, EXAN = `$B$${priceRow+5}`;
+  const WH = `$B$${priceRow+6}`, WA = `$B$${priceRow+7}`, WL = `$B$${priceRow+8}`, WMIN = `$B$${priceRow+9}`;
   const sum = {}; for(let c=3;c<=14;c++) sum[c]=0;
   members.forEach((m, i) => {
     const r = first + i;
@@ -1133,19 +1349,19 @@ function generateWarReport(){
     const isDonator = !!S.donators[m.id];
     const hits = m.hits||0, assists = m.assists||0, losses = m.losses||0, taken = m.taken||0;
     const xan = arm.xan||0, returned = arm.deposited||0, points = arm.points || refills*30, rep = +m.respect.toFixed(2);
-    const shares = hits*2 + assists;
-    const eCreated = refills * (isDonator ? EPRDv : EPRRv);
+    const shares = sharesFor(m, W);
+    const eCreated = xan*EXANv + refills * (isDonator ? EPRDv : EPRRv);
     const eUsed = (hits + assists + losses) * EPHv;
     set(`A${r}`, f(`C${r}*$R$2`, '#,##0', shares*PPP));
     set(`B${r}`, str(m.name));
-    set(`C${r}`, f(`G${r}*2+H${r}`, '#,##0', shares));
+    set(`C${r}`, f(`IF(G${r}<${WMIN},0,MAX(0,G${r}*${WH}+H${r}*${WA}-M${r}*${WL}))`, '#,##0.##', shares));
     set(`D${r}`, num(xan));
     set(`E${r}`, num(returned));
     set(`F${r}`, num(rep, '#,##0.00'));
     set(`G${r}`, num(hits));
     set(`H${r}`, num(assists));
     set(`I${r}`, num(points));
-    set(`J${r}`, f(`${refills}*${isDonator ? EPRD : EPRR}`, '#,##0', eCreated));
+    set(`J${r}`, f(`D${r}*${EXAN}+${refills}*${isDonator ? EPRD : EPRR}`, '#,##0', eCreated));
     set(`K${r}`, f(`(G${r}+H${r}+M${r})*${EPH}`, '#,##0', eUsed));
     set(`L${r}`, f(`K${r}-J${r}`, '#,##0', eUsed - eCreated));
     set(`M${r}`, num(losses));
@@ -1170,8 +1386,13 @@ function generateWarReport(){
   set(`A${pr+2}`, str('Energy per hit')); set(`B${pr+2}`, num(25));
   set(`A${pr+3}`, str('E per refill (donator)')); set(`B${pr+3}`, num(150));
   set(`A${pr+4}`, str('E per refill (regular)')); set(`B${pr+4}`, num(100));
+  set(`A${pr+5}`, str('E per Xanax'));    set(`B${pr+5}`, num(EXANv));
+  set(`A${pr+6}`, str('Shares per hit'));        set(`B${pr+6}`, ynum(W.hit, '0.##'));
+  set(`A${pr+7}`, str('Shares per assist'));     set(`B${pr+7}`, ynum(W.assist, '0.##'));
+  set(`A${pr+8}`, str('Shares lost per loss'));  set(`B${pr+8}`, ynum(W.loss, '0.##'));
+  set(`A${pr+9}`, str('Min hits to be paid'));   set(`B${pr+9}`, ynum(W.minHits, '0'));
 
-  const av = pr + 5;
+  const av = pr + 11;
   const n = members.length || 1;
   set(`A${av}`, str('Avg. Rep Per Hit'));
   set(`C${av}`, f(`IFERROR(F${tr}/G${tr},0)`, '#,##0.00', sum[7] ? sum[6]/sum[7] : 0));
@@ -1189,15 +1410,15 @@ function generateWarReport(){
   const lg = av + 4;
   set(`A${lg}`, str('Legend'));
   set(`A${lg+1}`, str('Auto-filled (no need to edit): Member, Rep, Hits, Assists, Losses, Hits Taken, Xan Taken, Xan Returned, Points Used.'));
-  set(`A${lg+2}`, str('Calculated: Shares = Hits x2 + Assists; Member Pay = Shares x Pay Per Point; E Used = (Hits+Assists+Losses) x E/hit; E Created = refills x E/refill; Faction Cost = Xan + Point cost.'));
-  set(`A${lg+3}`, str('Fill in the yellow cells: Cache Profit and Faction Cut (%) (defaults 20%). Pay Per Point is calculated = Member Cut / Total Shares.'));
+  set(`A${lg+2}`, str(`Calculated: Shares = Hits x ${W.hit} + Assists x ${W.assist} - Losses x ${W.loss} (0 if under ${W.minHits} hits); Member Pay = Shares x Pay Per Point; E Used = (Hits+Assists+Losses) x E/hit; E Created = Xan x E/Xanax + refills x E/refill; Faction Cost = Xan + Point cost.`));
+  set(`A${lg+3}`, str('Fill in the yellow cells: Cache Profit and Faction Cut (%) (defaults 20%). The share weights are yellow too and can be changed here. Pay Per Point is calculated = Member Cut / Total Shares.'));
 
   ws['!ref'] = `A1:R${lg+3}`;
   ws['!cols'] = [13,16,11,10,11,11,9,9,11,10,10,10,8,10,15,15,15,14].map(w => ({wch:w}));
 
   const armCount = Object.keys(S.armoury).length;
   const donCount = Object.values(S.donators).filter(Boolean).length;
-  const filled = `Xan & points auto-filled for ${armCount} members, ${donCount} donators detected. Fill in Cache Profit, Pay Per Point, and one Faction Cut cell.`;
+  const filled = `Xan & points auto-filled for ${armCount} members, ${donCount} donators detected. Fill in Cache Profit and Faction Cut (%).`;
   const tabName = enemyTabName();
 
   if(S.masterWb){
@@ -1259,6 +1480,7 @@ function persist(msg){
     myFaction:$('myFaction').value.trim(), enemyFaction:$('enemyFaction').value.trim(),
     warStart:$('warStart').value, warEnd:$('warEnd').value, armouryLookback:$('armouryLookback').value,
     warOnly:$('warOnly').checked, tct:$('tct').checked,
+    wHit:$('wHit').value, wAssist:$('wAssist').value, wLoss:$('wLoss').value, wMinHits:$('wMinHits').value,
     saveKey:$('saveKey').checked, apiKey: $('saveKey').checked ? $('apiKey').value.trim() : ''
   };
   try{
@@ -1275,6 +1497,7 @@ function restore(){
     $('warStart').value = s.warStart || '';
     $('warEnd').value = s.warEnd || '';
     $('armouryLookback').value = s.armouryLookback || '';
+    for(const k of ['wHit','wAssist','wLoss','wMinHits']) $(k).value = s[k] || '';
     if(s.warOnly !== undefined) $('warOnly').checked = s.warOnly;
     if(s.tct !== undefined) $('tct').checked = s.tct;
     $('saveKey').checked = !!s.saveKey;
@@ -1301,15 +1524,24 @@ document.querySelectorAll('#targetTable thead th.sortable').forEach(th => th.add
 }));
 $('fetchBtn').addEventListener('click', () => doFetch(false));
 $('saveBtn').addEventListener('click', () => persist(true));
-$('detectBtn').addEventListener('click', async () => {
-  try{ setStatus('Looking for an active ranked war...', ''); await findWar('active'); renderOverview(); setStatus('War found. Press Fetch hits to pull the log.', 'ok'); }
-  catch(e){ setStatus(e.message, 'err'); }
-});
-$('lastWarBtn').addEventListener('click', async () => {
-  try{ setStatus('Loading your last finished war...', ''); await findWar('last'); renderOverview(); setStatus('Last war loaded. Press Fetch hits to pull the log.', 'ok'); }
-  catch(e){ setStatus(e.message, 'err'); }
-});
-$('refreshTargets').addEventListener('click', loadTargets);
+// Finding a war goes straight on to pulling its hits.
+async function findAndFetch(mode){
+  if(S.busy) return setStatus('Already fetching — wait for it to finish.', 'warn');
+  try{
+    setStatus(mode === 'last' ? 'Loading your last finished war...' : 'Looking for an active ranked war...', '');
+    await findWar(mode);
+    S.lastFetchTo = 0;
+    S.targets = [];
+    renderOverview();
+  }catch(e){ return setStatus(e.message, 'err'); }
+  await doFetch(false);
+}
+$('detectBtn').addEventListener('click', () => findAndFetch('active'));
+$('lastWarBtn').addEventListener('click', () => findAndFetch('last'));
+$('refreshTargets').addEventListener('click', () => loadTargets());
+for(const id of ['wHit','wAssist','wLoss','wMinHits']){
+  $(id).addEventListener('input', () => { build(); renderRoster(); });
+}
 $('exportRosterCsv').addEventListener('click', exportRosterCsv);
 $('exportRosterXlsx').addEventListener('click', exportRosterXlsx);
 $('exportFeedCsv').addEventListener('click', exportFeedCsv);
@@ -1326,7 +1558,15 @@ $('hideIdle').addEventListener('change', renderRoster);
 $('targetFilter').addEventListener('input', renderTargets);
 $('onlyAttackable').addEventListener('change', renderTargets);
 $('warOnly').addEventListener('change', () => { build(); renderAll(); });
-$('tct').addEventListener('change', () => { renderAll(); renderTargets(); });
+$('tct').addEventListener('change', () => {
+  // Keep the same moments in time: re-express the typed dates in the newly chosen timezone.
+  const nowTct = $('tct').checked;
+  for(const id of ['warStart','warEnd']){
+    const ts = toEpoch($(id).value, !nowTct);
+    if(ts) $(id).value = fromEpoch(ts, nowTct);
+  }
+  renderAll(); renderTargets();
+});
 $('autoRefresh').addEventListener('change', () => {
   clearInterval(refreshTimer);
   if($('autoRefresh').checked){
